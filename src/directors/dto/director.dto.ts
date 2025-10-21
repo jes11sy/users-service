@@ -1,0 +1,64 @@
+import { IsString, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+
+export class CreateDirectorDto {
+  @ApiProperty()
+  @IsString()
+  name: string;
+
+  @ApiProperty()
+  @IsString()
+  login: string;
+
+  @ApiProperty()
+  @IsString()
+  password: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  statusWork?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  note?: string;
+}
+
+export class UpdateDirectorDto {
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  login?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  password?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  statusWork?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  note?: string;
+}
+

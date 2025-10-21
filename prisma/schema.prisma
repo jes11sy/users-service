@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Masters
+model Master {
+  id             Int       @id @default(autoincrement())
+  name           String
+  login          String?   @unique
+  password       String?
+  phone          String?
+  cities         String[]  @default([])
+  statusWork     String?
+  dateCreate     DateTime  @default(now())
+  note           String?
+  contractDoc    String?
+  passportDoc    String?
+  
+  orders         Order[]
+  
+  @@map("master")
+}
+
+// Directors
+model Director {
+  id             Int       @id @default(autoincrement())
+  name           String
+  login          String    @unique
+  password       String
+  city           String?
+  statusWork     String?
+  dateCreate     DateTime  @default(now())
+  note           String?
+  contractDoc    String?
+  passportDoc    String?
+  
+  orders         Order[]
+  cashApprovals  Cash[]    @relation("CashApprover")
+  
+  @@map("director")
+}
+
+// Call Centre Admins
+model CallcentreAdmin {
+  id             Int       @id @default(autoincrement())
+  name           String
+  login          String    @unique
+  password       String
+  statusWork     String?
+  dateCreate     DateTime  @default(now())
+  note           String?
+  
+  orders         Order[]   @relation("CallcentreAdminOrders")
+  
+  @@map("callcentre_admin")
+}
+
+// Call Centre Operators
+model CallcentreOperator {
+  id             Int       @id @default(autoincrement())
+  name           String
+  login          String    @unique
+  password       String
+  statusWork     String?
+  dateCreate     DateTime  @default(now())
+  note           String?
+  
+  orders         Order[]   @relation("CallcentreOperatorOrders")
+  
+  @@map("callcentre_operator")
+}
+
+// Order model (for relations only)
+model Order {
+  id                    Int       @id @default(autoincrement())
+  rk                    String
+  city                  String
+  avitoName             String?
+  phone                 String
+  typeOrder             String
+  clientName            String
+  address               String
+  dateMeeting           String
+  typeEquipment         String
+  problem               String
+  callRecord            String?
+  statusOrder           String
+  masterId              Int?
+  result                Int?
+  expenditure           Int?
+  clean                 Int?
+  masterChange          Int?
+  bsoDoc                String?
+  expenditureDoc        String?
+  operatorNameId        Int
+  createDate            DateTime  @default(now())
+  closingData           String?
+  avitoChatId           String?
+  callId                String?
+  prepayment            Int?
+  dateClosmod           String?
+  comment               String?
+  cashSubmissionStatus  String?
+  cashSubmissionDate    DateTime?
+  cashSubmissionAmount  Int?
+  cashReceiptDoc        String?
+  cashApprovedBy        Int?
+  cashApprovedDate      DateTime?
+  directorId            Int?
+  callcentreAdminId     Int?
+  callcentreOperatorId  Int?
+  
+  master                Master?              @relation(fields: [masterId], references: [id])
+  director              Director?            @relation(fields: [directorId], references: [id])
+  callcentreAdmin       CallcentreAdmin?     @relation("CallcentreAdminOrders", fields: [callcentreAdminId], references: [id])
+  callcentreOperator    CallcentreOperator?  @relation("CallcentreOperatorOrders", fields: [callcentreOperatorId], references: [id])
+  avito                 Avito?               @relation(fields: [avitoChatId], references: [chatId])
+  call                  Call?                @relation(fields: [callId], references: [callId])
+  cash                  Cash?
+  
+  @@map("order")
+}
+
+// Related models (minimal definitions for relations)
+model Avito {
+  id              Int      @id @default(autoincrement())
+  chatId          String   @unique
+  city            String?
+  name            String?
+  phone           String?
+  createdAt       DateTime @default(now())
+  
+  orders          Order[]
+  
+  @@map("avito")
+}
+
+model Call {
+  id              Int      @id @default(autoincrement())
+  callId          String   @unique
+  phoneClient     String
+  callDate        DateTime
+  duration        Int?
+  recordUrl       String?
+  
+  orders          Order[]
+  
+  @@map("call")
+}
+
+model Cash {
+  id                Int       @id @default(autoincrement())
+  orderId           Int       @unique
+  amount            Int
+  type              String
+  status            String
+  approvedBy        Int?
+  approvedDate      DateTime?
+  createdAt         DateTime  @default(now())
+  
+  order             Order     @relation(fields: [orderId], references: [id])
+  approver          Director? @relation("CashApprover", fields: [approvedBy], references: [id])
+  
+  @@map("cash")
+}
+
