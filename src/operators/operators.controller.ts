@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Patch, Body, Param, Query, UseGuards, HttpCode, HttpStatus, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { OperatorsService } from './operators.service';
@@ -61,6 +61,14 @@ export class OperatorsController {
     return this.operatorsService.updateOperator(+id, type, dto);
   }
 
+  @Patch('work-status')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update operator work status (self)' })
+  async updateWorkStatus(@Request() req, @Body() body: { statusWork: string }) {
+    return this.operatorsService.updateWorkStatus(req.user.id, body.statusWork);
+  }
+
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
@@ -70,6 +78,8 @@ export class OperatorsController {
     return this.operatorsService.deleteOperator(+id, type);
   }
 }
+
+
 
 
 

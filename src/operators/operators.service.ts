@@ -229,6 +229,33 @@ export class OperatorsService {
     throw new BadRequestException('Type must be "admin" or "operator"');
   }
 
+  async updateWorkStatus(userId: number, statusWork: string) {
+    // Try to find operator by id
+    const operator = await this.prisma.callcentreOperator.findUnique({
+      where: { id: userId },
+    });
+
+    if (!operator) {
+      throw new NotFoundException('Operator not found');
+    }
+
+    const updated = await this.prisma.callcentreOperator.update({
+      where: { id: userId },
+      data: { statusWork },
+      select: {
+        id: true,
+        name: true,
+        statusWork: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Work status updated successfully',
+      data: updated,
+    };
+  }
+
   async deleteOperator(id: number, type: string) {
     if (type === 'admin') {
       await this.prisma.callcentreAdmin.delete({
