@@ -9,13 +9,10 @@ export class OperatorsService {
   async getOperators(type?: string) {
     if (type === 'admin') {
       const admins = await this.prisma.callcentreAdmin.findMany({
-        orderBy: { dateCreate: 'desc' },
+        orderBy: { createdAt: 'desc' },
         select: {
           id: true,
-          name: true,
           login: true,
-          statusWork: true,
-          dateCreate: true,
           note: true,
         },
       });
@@ -48,13 +45,10 @@ export class OperatorsService {
     // Return both if no type specified
     const [admins, operators] = await Promise.all([
       this.prisma.callcentreAdmin.findMany({
-        orderBy: { dateCreate: 'desc' },
+        orderBy: { createdAt: 'desc' },
         select: {
           id: true,
-          name: true,
           login: true,
-          statusWork: true,
-          dateCreate: true,
           note: true,
         },
       }),
@@ -86,10 +80,7 @@ export class OperatorsService {
         where: { id },
         select: {
           id: true,
-          name: true,
           login: true,
-          statusWork: true,
-          dateCreate: true,
           note: true,
         },
       });
@@ -134,18 +125,13 @@ export class OperatorsService {
     if (dto.type === 'admin') {
       const admin = await this.prisma.callcentreAdmin.create({
         data: {
-          name: dto.name,
           login: dto.login,
           password: dto.password,
-          statusWork: dto.statusWork || 'active',
           note: dto.note,
         },
         select: {
           id: true,
-          name: true,
           login: true,
-          statusWork: true,
-          dateCreate: true,
         },
       });
 
@@ -162,7 +148,10 @@ export class OperatorsService {
           name: dto.name,
           login: dto.login,
           password: dto.password,
+          city: '',
+          status: 'active',
           statusWork: dto.statusWork || 'active',
+          dateCreate: new Date(),
           note: dto.note,
         },
         select: {
@@ -185,23 +174,19 @@ export class OperatorsService {
   }
 
   async updateOperator(id: number, type: string, dto: UpdateOperatorDto) {
-    const updateData = {
-      ...(dto.name && { name: dto.name }),
-      ...(dto.login && { login: dto.login }),
-      ...(dto.password && { password: dto.password }),
-      ...(dto.statusWork && { statusWork: dto.statusWork }),
-      ...(dto.note !== undefined && { note: dto.note }),
-    };
-
     if (type === 'admin') {
+      const updateData = {
+        ...(dto.login && { login: dto.login }),
+        ...(dto.password && { password: dto.password }),
+        ...(dto.note !== undefined && { note: dto.note }),
+      };
+
       const admin = await this.prisma.callcentreAdmin.update({
         where: { id },
         data: updateData,
         select: {
           id: true,
-          name: true,
           login: true,
-          statusWork: true,
           note: true,
         },
       });
@@ -214,6 +199,14 @@ export class OperatorsService {
     }
 
     if (type === 'operator') {
+      const updateData = {
+        ...(dto.name && { name: dto.name }),
+        ...(dto.login && { login: dto.login }),
+        ...(dto.password && { password: dto.password }),
+        ...(dto.statusWork && { statusWork: dto.statusWork }),
+        ...(dto.note !== undefined && { note: dto.note }),
+      };
+
       const operator = await this.prisma.callcentreOperator.update({
         where: { id },
         data: updateData,
@@ -262,7 +255,3 @@ export class OperatorsService {
     throw new BadRequestException('Type must be "admin" or "operator"');
   }
 }
-
-
-
-

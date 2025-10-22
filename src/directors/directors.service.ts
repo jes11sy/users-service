@@ -14,7 +14,6 @@ export class DirectorsService {
         name: true,
         login: true,
         cities: true,
-        statusWork: true,
         dateCreate: true,
         note: true,
         contractDoc: true,
@@ -36,7 +35,6 @@ export class DirectorsService {
         name: true,
         login: true,
         cities: true,
-        statusWork: true,
         dateCreate: true,
         note: true,
         contractDoc: true,
@@ -61,7 +59,6 @@ export class DirectorsService {
         login: dto.login,
         password: dto.password,
         cities: dto.cities || [],
-        statusWork: dto.statusWork || 'active',
         note: dto.note,
       },
       select: {
@@ -69,7 +66,6 @@ export class DirectorsService {
         name: true,
         login: true,
         cities: true,
-        statusWork: true,
         dateCreate: true,
       },
     });
@@ -89,7 +85,6 @@ export class DirectorsService {
         ...(dto.login && { login: dto.login }),
         ...(dto.password && { password: dto.password }),
         ...(dto.cities && { cities: dto.cities }),
-        ...(dto.statusWork && { statusWork: dto.statusWork }),
         ...(dto.note !== undefined && { note: dto.note }),
       },
       select: {
@@ -97,7 +92,6 @@ export class DirectorsService {
         name: true,
         login: true,
         cities: true,
-        statusWork: true,
         note: true,
       },
     });
@@ -120,7 +114,3 @@ export class DirectorsService {
     };
   }
 }
-
-
-
-

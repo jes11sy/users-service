@@ -81,7 +81,7 @@ export class MastersService {
         login: dto.login,
         password: dto.password,
         cities: dto.cities || [],
-        statusWork: dto.statusWork || 'active',
+        statusWork: dto.statusWork || 'Работает',
         note: dto.note,
       },
       select: {
