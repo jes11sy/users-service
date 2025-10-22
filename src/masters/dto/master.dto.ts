@@ -16,11 +16,6 @@ export class CreateMasterDto {
   @IsOptional()
   password?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  phone?: string;
-
   @ApiProperty({ required: false, type: [String] })
   @IsArray()
   @IsOptional()
@@ -52,11 +47,6 @@ export class UpdateMasterDto {
   @IsString()
   @IsOptional()
   password?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  phone?: string;
 
   @ApiProperty({ required: false, type: [String] })
   @IsArray()

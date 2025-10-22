@@ -14,10 +14,9 @@ export class CreateDirectorDto {
   @IsString()
   password: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @ApiProperty({ required: false, type: [String] })
   @IsOptional()
-  city?: string;
+  cities?: string[];
 
   @ApiProperty({ required: false })
   @IsString()
@@ -46,10 +45,9 @@ export class UpdateDirectorDto {
   @IsOptional()
   password?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @ApiProperty({ required: false, type: [String] })
   @IsOptional()
-  city?: string;
+  cities?: string[];
 
   @ApiProperty({ required: false })
   @IsString()

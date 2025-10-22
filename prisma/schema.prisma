@@ -10,16 +10,19 @@ datasource db {
 // Masters
 model Master {
   id             Int       @id @default(autoincrement())
+  cities         String[]  @default([])
   name           String
   login          String?   @unique
   password       String?
-  phone          String?
-  cities         String[]  @default([])
-  statusWork     String?
-  dateCreate     DateTime  @default(now())
+  passportDoc    String?   @map("passport_doc")
+  contractDoc    String?   @map("contract_doc")
+  statusWork     String?   @map("status_work")
+  dateCreate     DateTime  @default(now()) @map("date_create")
   note           String?
-  contractDoc    String?
-  passportDoc    String?
+  tgId           String?   @unique @map("tg_id")
+  chatId         String?   @map("chat_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
   
   orders         Order[]
   
@@ -29,15 +32,18 @@ model Master {
 // Directors
 model Director {
   id             Int       @id @default(autoincrement())
+  cities         String[]  @default([])
   name           String
   login          String    @unique
   password       String
-  city           String?
-  statusWork     String?
-  dateCreate     DateTime  @default(now())
+  contractDoc    String?   @map("contract_doc")
+  passportDoc    String?   @map("passport_doc")
+  dateCreate     DateTime  @default(now()) @map("date_create")
   note           String?
-  contractDoc    String?
-  passportDoc    String?
+  tgId           String?   @unique @map("tg_id")
+  chatId         String?   @map("chat_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
   
   orders         Order[]
   cashApprovals  Cash[]    @relation("CashApprover")
@@ -51,9 +57,11 @@ model CallcentreAdmin {
   name           String
   login          String    @unique
   password       String
-  statusWork     String?
-  dateCreate     DateTime  @default(now())
+  statusWork     String?   @map("status_work")
+  dateCreate     DateTime  @default(now()) @map("date_create")
   note           String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
   
   orders         Order[]   @relation("CallcentreAdminOrders")
   
@@ -66,9 +74,16 @@ model CallcentreOperator {
   name           String
   login          String    @unique
   password       String
-  statusWork     String?
-  dateCreate     DateTime  @default(now())
+  city           String
+  status         String
+  statusWork     String    @map("status_work")
+  passport       String?
+  contract       String?
+  dateCreate     DateTime  @map("date_create")
   note           String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  sipAddress     String?   @map("sip_address")
   
   orders         Order[]   @relation("CallcentreOperatorOrders")
   
@@ -142,15 +157,15 @@ model Avito {
 
 model Call {
   id              Int      @id @default(autoincrement())
-  callId          String   @unique
-  phoneClient     String
-  callDate        DateTime
+  callId          String   @unique @map("call_id")
+  phoneClient     String   @map("phone_client")
+  dateCreate      DateTime @map("date_create")
   duration        Int?
-  recordUrl       String?
+  recordUrl       String?  @map("record_url")
   
   orders          Order[]
   
-  @@map("call")
+  @@map("calls")
 }
 
 model Cash {

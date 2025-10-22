@@ -23,7 +23,6 @@ export class MastersService {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { login: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -34,7 +33,6 @@ export class MastersService {
         id: true,
         name: true,
         login: true,
-        phone: true,
         cities: true,
         statusWork: true,
         dateCreate: true,
@@ -57,7 +55,6 @@ export class MastersService {
         id: true,
         name: true,
         login: true,
-        phone: true,
         cities: true,
         statusWork: true,
         dateCreate: true,
@@ -83,7 +80,6 @@ export class MastersService {
         name: dto.name,
         login: dto.login,
         password: dto.password,
-        phone: dto.phone,
         cities: dto.cities || [],
         statusWork: dto.statusWork || 'active',
         note: dto.note,
@@ -92,7 +88,6 @@ export class MastersService {
         id: true,
         name: true,
         login: true,
-        phone: true,
         cities: true,
         statusWork: true,
         dateCreate: true,
@@ -113,7 +108,6 @@ export class MastersService {
         ...(dto.name && { name: dto.name }),
         ...(dto.login && { login: dto.login }),
         ...(dto.password && { password: dto.password }),
-        ...(dto.phone && { phone: dto.phone }),
         ...(dto.cities && { cities: dto.cities }),
         ...(dto.statusWork && { statusWork: dto.statusWork }),
         ...(dto.note !== undefined && { note: dto.note }),
@@ -122,7 +116,6 @@ export class MastersService {
         id: true,
         name: true,
         login: true,
-        phone: true,
         cities: true,
         statusWork: true,
         note: true,
