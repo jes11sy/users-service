@@ -66,7 +66,7 @@ export class OperatorsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update operator work status (self)' })
   async updateWorkStatus(@Request() req, @Body() body: { statusWork: string }) {
-    return this.operatorsService.updateWorkStatus(req.user.id, body.statusWork);
+    return this.operatorsService.updateWorkStatus(req.user.userId, body.statusWork);
   }
 
   @Delete(':id')
