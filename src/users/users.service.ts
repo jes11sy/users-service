@@ -6,14 +6,15 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async getProfile(user: any) {
-    const { id, role } = user;
+    console.log('User from JWT:', user);
+    const { id, login, role } = user;
 
     // Получаем профиль пользователя в зависимости от роли
     let profile;
     
     if (role === 'master') {
       profile = await this.prisma.master.findUnique({
-        where: { id },
+        where: { login },
         select: {
           id: true,
           name: true,
@@ -28,7 +29,7 @@ export class UsersService {
       });
     } else if (role === 'director') {
       profile = await this.prisma.director.findUnique({
-        where: { id },
+        where: { login },
         select: {
           id: true,
           name: true,
@@ -41,7 +42,7 @@ export class UsersService {
       });
     } else if (role === 'operator') {
       profile = await this.prisma.callcentreOperator.findUnique({
-        where: { id },
+        where: { login },
         select: {
           id: true,
           name: true,
