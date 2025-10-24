@@ -51,8 +51,8 @@ export class MastersService {
   async getEmployees(query: any) {
     const { search, role } = query;
 
-    // Получаем всех сотрудников (мастеров, директоров, операторов)
-    const [masters, directors, operators] = await Promise.all([
+    // Получаем всех сотрудников (мастеров и директоров)
+    const [masters, directors] = await Promise.all([
       this.prisma.master.findMany({
         where: search ? {
           OR: [
@@ -68,7 +68,6 @@ export class MastersService {
           statusWork: true,
           dateCreate: true,
           note: true,
-          role: true,
         },
         orderBy: { dateCreate: 'desc' },
       }),
@@ -86,24 +85,6 @@ export class MastersService {
           cities: true,
           dateCreate: true,
           note: true,
-          role: true,
-        },
-        orderBy: { dateCreate: 'desc' },
-      }),
-      this.prisma.operator.findMany({
-        where: search ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { login: { contains: search, mode: 'insensitive' } },
-          ],
-        } : {},
-        select: {
-          id: true,
-          name: true,
-          login: true,
-          dateCreate: true,
-          note: true,
-          role: true,
         },
         orderBy: { dateCreate: 'desc' },
       }),
@@ -113,7 +94,6 @@ export class MastersService {
     const allEmployees = [
       ...masters.map(m => ({ ...m, role: 'master' })),
       ...directors.map(d => ({ ...d, role: 'director' })),
-      ...operators.map(o => ({ ...o, role: 'operator' })),
     ];
 
     // Фильтруем по роли если указана
