@@ -30,6 +30,15 @@ export class MastersController {
     return this.mastersService.getMasters(query);
   }
 
+  @Get('employees')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiBearerAuth()
+  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
+  @ApiOperation({ summary: 'Get all employees (masters, directors, operators)' })
+  async getEmployees(@Query() query: any) {
+    return this.mastersService.getEmployees(query);
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
