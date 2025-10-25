@@ -30,26 +30,6 @@ export class CreateMasterDto {
   @IsString()
   @IsOptional()
   note?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  tgId?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  chatId?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  passportDoc?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  contractDoc?: string;
 }
 
 export class UpdateMasterDto {
@@ -82,26 +62,6 @@ export class UpdateMasterDto {
   @IsString()
   @IsOptional()
   note?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  tgId?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  chatId?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  passportDoc?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  contractDoc?: string;
 }
 
 

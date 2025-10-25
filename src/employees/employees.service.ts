@@ -82,6 +82,59 @@ export class EmployeesService {
     };
   }
 
+  async getEmployee(id: number) {
+    // Ищем мастера или директора
+    const master = await this.prisma.master.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        login: true,
+        password: true,
+        cities: true,
+        statusWork: true,
+        dateCreate: true,
+        note: true,
+        tgId: true,
+        chatId: true,
+        passportDoc: true,
+        contractDoc: true,
+      },
+    });
+
+    if (master) {
+      return {
+        success: true,
+        data: { ...master, role: 'master', hasPassword: !!master.password },
+      };
+    }
+
+    const director = await this.prisma.director.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        login: true,
+        password: true,
+        cities: true,
+        dateCreate: true,
+        note: true,
+        tgId: true,
+        passportDoc: true,
+        contractDoc: true,
+      },
+    });
+
+    if (director) {
+      return {
+        success: true,
+        data: { ...director, role: 'director', hasPassword: !!director.password },
+      };
+    }
+
+    throw new NotFoundException('Employee not found');
+  }
+
   async createEmployee(dto: CreateMasterDto) {
     const master = await this.prisma.master.create({
       data: {
