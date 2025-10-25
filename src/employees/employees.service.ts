@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateMasterDto, UpdateMasterDto } from '../masters/dto/master.dto';
 
 @Injectable()
 export class EmployeesService {
@@ -21,10 +22,15 @@ export class EmployeesService {
           id: true,
           name: true,
           login: true,
+          password: true,
           cities: true,
           statusWork: true,
           dateCreate: true,
           note: true,
+          tgId: true,
+          chatId: true,
+          passportDoc: true,
+          contractDoc: true,
         },
         orderBy: { dateCreate: 'desc' },
       }),
@@ -39,9 +45,13 @@ export class EmployeesService {
           id: true,
           name: true,
           login: true,
+          password: true,
           cities: true,
           dateCreate: true,
           note: true,
+          tgId: true,
+          passportDoc: true,
+          contractDoc: true,
         },
         orderBy: { dateCreate: 'desc' },
       }),
@@ -49,8 +59,16 @@ export class EmployeesService {
 
     // Объединяем всех сотрудников
     const allEmployees = [
-      ...masters.map(m => ({ ...m, role: 'master' })),
-      ...directors.map(d => ({ ...d, role: 'director' })),
+      ...masters.map(m => ({ 
+        ...m, 
+        role: 'master',
+        hasPassword: !!m.password 
+      })),
+      ...directors.map(d => ({ 
+        ...d, 
+        role: 'director',
+        hasPassword: !!d.password 
+      })),
     ];
 
     // Фильтруем по роли если указана
@@ -61,6 +79,88 @@ export class EmployeesService {
     return {
       success: true,
       data: filteredEmployees,
+    };
+  }
+
+  async createEmployee(dto: CreateMasterDto) {
+    const master = await this.prisma.master.create({
+      data: {
+        name: dto.name,
+        login: dto.login,
+        password: dto.password,
+        cities: dto.cities || [],
+        statusWork: dto.statusWork || 'Работает',
+        note: dto.note,
+        tgId: dto.tgId,
+        chatId: dto.chatId,
+        passportDoc: dto.passportDoc,
+        contractDoc: dto.contractDoc,
+      },
+      select: {
+        id: true,
+        name: true,
+        login: true,
+        password: true,
+        cities: true,
+        statusWork: true,
+        dateCreate: true,
+        note: true,
+        tgId: true,
+        chatId: true,
+        passportDoc: true,
+        contractDoc: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Employee created successfully',
+      data: { ...master, role: 'master', hasPassword: !!master.password },
+    };
+  }
+
+  async updateEmployee(id: number, dto: UpdateMasterDto) {
+    const master = await this.prisma.master.findUnique({
+      where: { id },
+    });
+
+    if (!master) {
+      throw new NotFoundException('Employee not found');
+    }
+
+    const updated = await this.prisma.master.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: dto.name }),
+        ...(dto.login && { login: dto.login }),
+        ...(dto.password && { password: dto.password }),
+        ...(dto.cities && { cities: dto.cities }),
+        ...(dto.statusWork && { statusWork: dto.statusWork }),
+        ...(dto.note !== undefined && { note: dto.note }),
+        ...(dto.tgId !== undefined && { tgId: dto.tgId }),
+        ...(dto.chatId !== undefined && { chatId: dto.chatId }),
+        ...(dto.passportDoc !== undefined && { passportDoc: dto.passportDoc }),
+        ...(dto.contractDoc !== undefined && { contractDoc: dto.contractDoc }),
+      },
+      select: {
+        id: true,
+        name: true,
+        login: true,
+        password: true,
+        cities: true,
+        statusWork: true,
+        note: true,
+        tgId: true,
+        chatId: true,
+        passportDoc: true,
+        contractDoc: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Employee updated successfully',
+      data: { ...updated, role: 'master', hasPassword: !!updated.password },
     };
   }
 }

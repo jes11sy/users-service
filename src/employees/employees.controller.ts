@@ -1,8 +1,9 @@
-import { Controller, Get, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Query, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { EmployeesService } from './employees.service';
 import { RolesGuard, Roles, UserRole } from '../auth/roles.guard';
+import { CreateMasterDto, UpdateMasterDto } from '../masters/dto/master.dto';
 
 @ApiTags('employees')
 @Controller('employees')
@@ -27,5 +28,23 @@ export class EmployeesController {
   @ApiOperation({ summary: 'Get all employees (masters, directors)' })
   async getEmployees(@Query() query: any) {
     return this.employeesService.getEmployees(query);
+  }
+
+  @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiBearerAuth()
+  @Roles(UserRole.DIRECTOR)
+  @ApiOperation({ summary: 'Create new employee (master)' })
+  async createEmployee(@Body() dto: CreateMasterDto) {
+    return this.employeesService.createEmployee(dto);
+  }
+
+  @Put(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiBearerAuth()
+  @Roles(UserRole.DIRECTOR)
+  @ApiOperation({ summary: 'Update employee' })
+  async updateEmployee(@Param('id') id: string, @Body() dto: UpdateMasterDto) {
+    return this.employeesService.updateEmployee(+id, dto);
   }
 }
