@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, HttpCode, HttpStatus, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { MastersService } from './masters.service';
 import { CreateMasterDto, UpdateMasterDto } from './dto/master.dto';
 import { RolesGuard, Roles, UserRole } from '../auth/roles.guard';
+import { GetMastersQueryDto, GetEmployeesQueryDto } from '../common/dto/query.dto';
 
 @ApiTags('masters')
 @Controller('masters')
@@ -26,7 +27,7 @@ export class MastersController {
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get all masters' })
-  async getMasters(@Query() query: any) {
+  async getMasters(@Query() query: GetMastersQueryDto) {
     return this.mastersService.getMasters(query);
   }
 
@@ -35,7 +36,7 @@ export class MastersController {
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get all employees (masters, directors, operators)' })
-  async getEmployees(@Query() query: any) {
+  async getEmployees(@Query() query: GetEmployeesQueryDto) {
     return this.mastersService.getEmployees(query);
   }
 
@@ -81,8 +82,13 @@ export class MastersController {
   @ApiOperation({ summary: 'Update master documents' })
   async updateDocuments(
     @Param('id') id: string,
+    @Request() req,
     @Body() body: { contractDoc?: string; passportDoc?: string },
   ) {
+    // Проверяем права доступа: мастер может редактировать только свои документы
+    if (req.user.role === UserRole.MASTER && +id !== req.user.userId) {
+      throw new ForbiddenException('You can only update your own documents');
+    }
     return this.mastersService.updateDocuments(+id, body);
   }
 }

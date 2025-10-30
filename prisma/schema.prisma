@@ -26,6 +26,9 @@ model Master {
   
   orders Order[]
   
+  @@index([statusWork])
+  @@index([name])
+  @@index([dateCreate])
   @@map("master")
 }
 
@@ -47,6 +50,8 @@ model Director {
   orders       Order[]
   cashApprovals Cash[]  @relation("CashApprover")
   
+  @@index([name])
+  @@index([dateCreate])
   @@map("director")
 }
 
@@ -83,6 +88,9 @@ model CallcentreOperator {
   
   orders         Order[]   @relation("CallcentreOperatorOrders")
   
+  @@index([statusWork])
+  @@index([name])
+  @@index([dateCreate])
   @@map("callcentre_operator")
 }
 

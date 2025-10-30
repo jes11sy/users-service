@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDto, UpdateMasterDto } from './dto/master.dto';
 
@@ -6,8 +6,17 @@ import { CreateMasterDto, UpdateMasterDto } from './dto/master.dto';
 export class MastersService {
   constructor(private prisma: PrismaService) {}
 
+  private validateSearchQuery(search: string | undefined): void {
+    if (search && search.length > 100) {
+      throw new BadRequestException('Search query must not exceed 100 characters');
+    }
+  }
+
   async getMasters(query: any) {
     const { city, statusWork, search } = query;
+
+    // Валидация поискового запроса
+    this.validateSearchQuery(search);
 
     const where: any = {};
 
@@ -51,7 +60,12 @@ export class MastersService {
   async getEmployees(query: any) {
     const { search, role } = query;
 
+    // Валидация поискового запроса
+    this.validateSearchQuery(search);
+
     // Получаем всех сотрудников (мастеров и директоров)
+    // ✅ Оптимизация: используем Promise.all для параллельного выполнения запросов
+    // Это предотвращает N+1 проблему и уменьшает время ответа
     const [masters, directors] = await Promise.all([
       this.prisma.master.findMany({
         where: search ? {

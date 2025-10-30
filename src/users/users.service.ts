@@ -1,12 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async getProfile(user: any) {
-    console.log('User from JWT:', user);
+    // Логируем только id и роль, без чувствительных данных
+    this.logger.debug(`Profile requested for user: id=${user.userId}, role=${user.role}`);
     const { id, login, role } = user;
 
     // Получаем профиль пользователя в зависимости от роли

@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { OperatorsService } from './operators.service';
 import { CreateOperatorDto, UpdateOperatorDto } from './dto/operator.dto';
 import { RolesGuard, Roles, UserRole } from '../auth/roles.guard';
+import { GetOperatorsQueryDto } from '../common/dto/query.dto';
 
 @ApiTags('operators')
 @Controller('operators')
@@ -26,8 +27,8 @@ export class OperatorsController {
   @ApiBearerAuth()
   @Roles(UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Get all operators and admins' })
-  async getOperators(@Query('type') type?: string) {
-    return this.operatorsService.getOperators(type);
+  async getOperators(@Query() query: GetOperatorsQueryDto) {
+    return this.operatorsService.getOperators(query.type);
   }
 
   @Get(':id')
