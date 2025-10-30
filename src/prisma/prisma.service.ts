@@ -8,19 +8,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   constructor() {
     super({
       log: [
-        { emit: 'event', level: 'query' },
         { emit: 'stdout', level: 'info' },
         { emit: 'stdout', level: 'warn' },
         { emit: 'stdout', level: 'error' },
       ],
       errorFormat: 'pretty',
-    });
-
-    // Логирование медленных запросов (> 1 секунда)
-    this.$on('query' as any, (e: any) => {
-      if (e.duration > 1000) {
-        this.logger.warn(`Slow query detected (${e.duration}ms): ${e.query}`);
-      }
     });
   }
 
