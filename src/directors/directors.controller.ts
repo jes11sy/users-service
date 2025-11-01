@@ -51,7 +51,7 @@ export class DirectorsController {
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Update director' })
   async updateDirector(@Param('id') id: string, @Body() dto: UpdateDirectorDto) {
     return this.directorsService.updateDirector(+id, dto);

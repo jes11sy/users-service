@@ -61,7 +61,7 @@ export class MastersController {
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Update master' })
   async updateMaster(@Param('id') id: string, @Body() dto: UpdateMasterDto) {
     return this.mastersService.updateMaster(+id, dto);

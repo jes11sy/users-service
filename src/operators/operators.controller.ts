@@ -52,7 +52,7 @@ export class OperatorsController {
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Update operator/admin' })
   async updateOperator(
     @Param('id') id: string,
