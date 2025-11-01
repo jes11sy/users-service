@@ -58,6 +58,16 @@ export class UsersService {
           sipAddress: true,
         },
       });
+    } else if (role === 'admin') {
+      profile = await this.prisma.callcentreAdmin.findUnique({
+        where: { login },
+        select: {
+          id: true,
+          login: true,
+          note: true,
+          createdAt: true,
+        },
+      });
     }
 
     if (!profile) {

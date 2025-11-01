@@ -24,7 +24,7 @@ export class DirectorsController {
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR)
+  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get all directors' })
   async getDirectors() {
     return this.directorsService.getDirectors();
@@ -33,7 +33,7 @@ export class DirectorsController {
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR)
+  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get director by ID' })
   async getDirector(@Param('id') id: string) {
     return this.directorsService.getDirector(+id);

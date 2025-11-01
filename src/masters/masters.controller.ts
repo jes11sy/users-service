@@ -43,6 +43,7 @@ export class MastersController {
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
+  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get master by ID' })
   async getMaster(@Param('id') id: string) {
     return this.mastersService.getMaster(+id);
