@@ -32,6 +32,7 @@ export class OperatorsService {
           login: true,
           statusWork: true,
           dateCreate: true,
+          sipAddress: true,
           note: true,
         },
       });
@@ -104,7 +105,10 @@ export class OperatorsService {
           login: true,
           statusWork: true,
           dateCreate: true,
+          sipAddress: true,
           note: true,
+          passport: true,
+          contract: true,
         },
       });
 

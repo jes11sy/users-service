@@ -131,6 +131,8 @@ export class MastersService {
         cities: true,
         statusWork: true,
         dateCreate: true,
+        tgId: true,
+        chatId: true,
         note: true,
         contractDoc: true,
         passportDoc: true,
