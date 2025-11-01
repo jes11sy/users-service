@@ -33,7 +33,7 @@ export class EmployeesController {
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get employee by ID' })
   async getEmployee(@Param('id') id: string) {
     return this.employeesService.getEmployee(+id);

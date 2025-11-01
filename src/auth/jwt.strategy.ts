@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 interface JwtPayload {
   sub: number;
   login: string;
-  role: 'master' | 'director' | 'callcentre_admin' | 'callcentre_operator';
+  role: 'master' | 'director' | 'admin' | 'callcentre_admin' | 'callcentre_operator';
   iat?: number;
   exp?: number;
 }
@@ -42,7 +42,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Проверка валидности роли
-    const validRoles = ['master', 'director', 'callcentre_admin', 'callcentre_operator'];
+    const validRoles = ['master', 'director', 'admin', 'callcentre_admin', 'callcentre_operator'];
     if (!validRoles.includes(payload.role)) {
       this.logger.warn(`Invalid role in JWT: ${payload.role}`);
       throw new UnauthorizedException('Invalid role in token');
@@ -80,6 +80,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           });
           return !!director;
 
+        case 'admin':
         case 'callcentre_admin':
           const admin = await this.prisma.callcentreAdmin.findUnique({
             where: { id: userId },

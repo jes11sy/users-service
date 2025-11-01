@@ -25,7 +25,7 @@ export class MastersController {
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get all masters' })
   async getMasters(@Query() query: GetMastersQueryDto) {
     return this.mastersService.getMasters(query);
@@ -34,7 +34,7 @@ export class MastersController {
   @Get('employees')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get all employees (masters, directors, operators)' })
   async getEmployees(@Query() query: GetEmployeesQueryDto) {
     return this.mastersService.getEmployees(query);
@@ -43,7 +43,7 @@ export class MastersController {
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get master by ID' })
   async getMaster(@Param('id') id: string) {
     return this.mastersService.getMaster(+id);

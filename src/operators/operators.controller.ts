@@ -25,7 +25,7 @@ export class OperatorsController {
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Get all operators and admins' })
   async getOperators(@Query() query: GetOperatorsQueryDto) {
     return this.operatorsService.getOperators(query.type);
@@ -34,7 +34,7 @@ export class OperatorsController {
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Get operator/admin by ID' })
   async getOperator(@Param('id') id: string, @Query('type') type: string) {
     return this.operatorsService.getOperator(+id, type);
