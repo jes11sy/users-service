@@ -61,6 +61,9 @@ export class DirectorsService {
         login: dto.login,
         password: dto.password,
         cities: dto.cities || [],
+        tgId: dto.tgId,
+        passportDoc: dto.passportDoc,
+        contractDoc: dto.contractDoc,
         note: dto.note,
       },
       select: {
@@ -68,6 +71,9 @@ export class DirectorsService {
         name: true,
         login: true,
         cities: true,
+        tgId: true,
+        passportDoc: true,
+        contractDoc: true,
         dateCreate: true,
       },
     });
