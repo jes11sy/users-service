@@ -42,7 +42,7 @@ export class DirectorsController {
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR)
+  @Roles(UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Create new director' })
   async createDirector(@Body() dto: CreateDirectorDto) {
     return this.directorsService.createDirector(dto);
