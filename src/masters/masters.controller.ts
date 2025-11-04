@@ -27,8 +27,8 @@ export class MastersController {
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get all masters' })
-  async getMasters(@Query() query: GetMastersQueryDto) {
-    return this.mastersService.getMasters(query);
+  async getMasters(@Query() query: GetMastersQueryDto, @Request() req) {
+    return this.mastersService.getMasters(query, req.user);
   }
 
   @Get('employees')
@@ -36,8 +36,8 @@ export class MastersController {
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get all employees (masters, directors, operators)' })
-  async getEmployees(@Query() query: GetEmployeesQueryDto) {
-    return this.mastersService.getEmployees(query);
+  async getEmployees(@Query() query: GetEmployeesQueryDto, @Request() req) {
+    return this.mastersService.getEmployees(query, req.user);
   }
 
   @Get(':id')
