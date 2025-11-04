@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDto, UpdateMasterDto } from './dto/master.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class MastersService {
   constructor(private prisma: PrismaService) {}
+
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 12);
+  }
 
   private validateSearchQuery(search: string | undefined): void {
     if (search && search.length > 100) {
@@ -177,7 +182,7 @@ export class MastersService {
       data: {
         name: dto.name,
         login: dto.login,
-        password: dto.password,
+        password: dto.password ? await this.hashPassword(dto.password) : null,
         cities: dto.cities || [],
         statusWork: dto.statusWork || 'Работает',
         note: dto.note,
@@ -200,16 +205,22 @@ export class MastersService {
   }
 
   async updateMaster(id: number, dto: UpdateMasterDto) {
+    const updateData: any = {
+      ...(dto.name && { name: dto.name }),
+      ...(dto.login && { login: dto.login }),
+      ...(dto.cities && { cities: dto.cities }),
+      ...(dto.statusWork && { statusWork: dto.statusWork }),
+      ...(dto.note !== undefined && { note: dto.note }),
+    };
+
+    // Хэшируем пароль если он передан
+    if (dto.password) {
+      updateData.password = await this.hashPassword(dto.password);
+    }
+
     const master = await this.prisma.master.update({
       where: { id },
-      data: {
-        ...(dto.name && { name: dto.name }),
-        ...(dto.login && { login: dto.login }),
-        ...(dto.password && { password: dto.password }),
-        ...(dto.cities && { cities: dto.cities }),
-        ...(dto.statusWork && { statusWork: dto.statusWork }),
-        ...(dto.note !== undefined && { note: dto.note }),
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,

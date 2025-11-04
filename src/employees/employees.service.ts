@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDto, UpdateMasterDto } from '../masters/dto/master.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class EmployeesService {
   constructor(private prisma: PrismaService) {}
+
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 12);
+  }
 
   async getEmployees(query: any) {
     const { search, role } = query;
@@ -140,7 +145,7 @@ export class EmployeesService {
       data: {
         name: dto.name,
         login: dto.login,
-        password: dto.password,
+        password: dto.password ? await this.hashPassword(dto.password) : null,
         cities: dto.cities || [],
         statusWork: dto.statusWork || 'Работает',
         note: dto.note,
@@ -181,20 +186,26 @@ export class EmployeesService {
       throw new NotFoundException('Employee not found');
     }
 
+    const updateData: any = {
+      ...(dto.name && { name: dto.name }),
+      ...(dto.login && { login: dto.login }),
+      ...(dto.cities && { cities: dto.cities }),
+      ...(dto.statusWork && { statusWork: dto.statusWork }),
+      ...(dto.note !== undefined && { note: dto.note }),
+      ...(dto.tgId !== undefined && { tgId: dto.tgId }),
+      ...(dto.chatId !== undefined && { chatId: dto.chatId }),
+      ...(dto.passportDoc !== undefined && { passportDoc: dto.passportDoc }),
+      ...(dto.contractDoc !== undefined && { contractDoc: dto.contractDoc }),
+    };
+
+    // Хэшируем пароль если он передан
+    if (dto.password) {
+      updateData.password = await this.hashPassword(dto.password);
+    }
+
     const updated = await this.prisma.master.update({
       where: { id },
-      data: {
-        ...(dto.name && { name: dto.name }),
-        ...(dto.login && { login: dto.login }),
-        ...(dto.password && { password: dto.password }),
-        ...(dto.cities && { cities: dto.cities }),
-        ...(dto.statusWork && { statusWork: dto.statusWork }),
-        ...(dto.note !== undefined && { note: dto.note }),
-        ...(dto.tgId !== undefined && { tgId: dto.tgId }),
-        ...(dto.chatId !== undefined && { chatId: dto.chatId }),
-        ...(dto.passportDoc !== undefined && { passportDoc: dto.passportDoc }),
-        ...(dto.contractDoc !== undefined && { contractDoc: dto.contractDoc }),
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,
