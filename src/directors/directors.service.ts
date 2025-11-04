@@ -96,7 +96,6 @@ export class DirectorsService {
         ...(dto.tgId !== undefined && { tgId: dto.tgId }),
         ...(dto.passportDoc !== undefined && { passportDoc: dto.passportDoc }),
         ...(dto.contractDoc !== undefined && { contractDoc: dto.contractDoc }),
-        ...(dto.statusWork !== undefined && { statusWork: dto.statusWork }),
         ...(dto.note !== undefined && { note: dto.note }),
       },
       select: {
@@ -107,7 +106,6 @@ export class DirectorsService {
         tgId: true,
         passportDoc: true,
         contractDoc: true,
-        statusWork: true,
         note: true,
       },
     });

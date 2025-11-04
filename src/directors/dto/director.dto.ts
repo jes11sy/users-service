@@ -36,11 +36,6 @@ export class CreateDirectorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  statusWork?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
   note?: string;
 }
 
@@ -78,11 +73,6 @@ export class UpdateDirectorDto {
   @IsString()
   @IsOptional()
   contractDoc?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  statusWork?: string;
 
   @ApiProperty({ required: false })
   @IsString()
