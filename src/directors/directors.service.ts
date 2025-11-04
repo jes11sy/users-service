@@ -93,6 +93,10 @@ export class DirectorsService {
         ...(dto.login && { login: dto.login }),
         ...(dto.password && { password: dto.password }),
         ...(dto.cities && { cities: dto.cities }),
+        ...(dto.tgId !== undefined && { tgId: dto.tgId }),
+        ...(dto.passportDoc !== undefined && { passportDoc: dto.passportDoc }),
+        ...(dto.contractDoc !== undefined && { contractDoc: dto.contractDoc }),
+        ...(dto.statusWork !== undefined && { statusWork: dto.statusWork }),
         ...(dto.note !== undefined && { note: dto.note }),
       },
       select: {
@@ -100,6 +104,10 @@ export class DirectorsService {
         name: true,
         login: true,
         cities: true,
+        tgId: true,
+        passportDoc: true,
+        contractDoc: true,
+        statusWork: true,
         note: true,
       },
     });

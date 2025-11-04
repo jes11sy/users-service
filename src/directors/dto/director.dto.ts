@@ -67,6 +67,21 @@ export class UpdateDirectorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  tgId?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  passportDoc?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  contractDoc?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
   statusWork?: string;
 
   @ApiProperty({ required: false })
