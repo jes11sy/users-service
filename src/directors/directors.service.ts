@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDirectorDto, UpdateDirectorDto } from './dto/director.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class DirectorsService {
@@ -55,11 +56,14 @@ export class DirectorsService {
   }
 
   async createDirector(dto: CreateDirectorDto) {
+    // Хешируем пароль
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
     const director = await this.prisma.director.create({
       data: {
         name: dto.name,
         login: dto.login,
-        password: dto.password,
+        password: hashedPassword,
         cities: dto.cities || [],
         tgId: dto.tgId,
         passportDoc: dto.passportDoc,
@@ -86,18 +90,24 @@ export class DirectorsService {
   }
 
   async updateDirector(id: number, dto: UpdateDirectorDto) {
+    // Хешируем пароль если он передан
+    const updateData: any = {
+      ...(dto.name && { name: dto.name }),
+      ...(dto.login && { login: dto.login }),
+      ...(dto.cities && { cities: dto.cities }),
+      ...(dto.tgId !== undefined && { tgId: dto.tgId }),
+      ...(dto.passportDoc !== undefined && { passportDoc: dto.passportDoc }),
+      ...(dto.contractDoc !== undefined && { contractDoc: dto.contractDoc }),
+      ...(dto.note !== undefined && { note: dto.note }),
+    };
+
+    if (dto.password) {
+      updateData.password = await bcrypt.hash(dto.password, 10);
+    }
+
     const director = await this.prisma.director.update({
       where: { id },
-      data: {
-        ...(dto.name && { name: dto.name }),
-        ...(dto.login && { login: dto.login }),
-        ...(dto.password && { password: dto.password }),
-        ...(dto.cities && { cities: dto.cities }),
-        ...(dto.tgId !== undefined && { tgId: dto.tgId }),
-        ...(dto.passportDoc !== undefined && { passportDoc: dto.passportDoc }),
-        ...(dto.contractDoc !== undefined && { contractDoc: dto.contractDoc }),
-        ...(dto.note !== undefined && { note: dto.note }),
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,
