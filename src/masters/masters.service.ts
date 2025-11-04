@@ -24,9 +24,13 @@ export class MastersService {
     if (user?.role === 'director' && user?.cities && user.cities.length > 0) {
       // Для директора показываем только мастеров его городов
       where.cities = { hasSome: user.cities };
-    }
-
-    if (city) {
+      
+      // Если директор дополнительно фильтрует по конкретному городу из своего списка
+      if (city && user.cities.includes(city)) {
+        where.cities = { has: city };
+      }
+    } else if (city) {
+      // Для админа можно фильтровать по любому городу
       where.cities = { has: city };
     }
 
