@@ -184,7 +184,7 @@ export class MastersService {
         login: dto.login,
         password: dto.password ? await this.hashPassword(dto.password) : null,
         cities: dto.cities || [],
-        statusWork: dto.statusWork || 'Работает',
+        statusWork: dto.statusWork || 'работает',
         note: dto.note,
       },
       select: {
