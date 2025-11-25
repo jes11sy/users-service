@@ -43,7 +43,7 @@ export class OperatorsController {
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Create new operator/admin' })
   async createOperator(@Body() dto: CreateOperatorDto) {
     return this.operatorsService.createOperator(dto);
