@@ -28,6 +28,21 @@ export class CreateOperatorDto {
   @IsString()
   @IsOptional()
   note?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  sipAddress?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  passport?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  contract?: string;
 }
 
 export class UpdateOperatorDto {
@@ -55,6 +70,21 @@ export class UpdateOperatorDto {
   @IsString()
   @IsOptional()
   note?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  sipAddress?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  passport?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  contract?: string;
 }
 
 

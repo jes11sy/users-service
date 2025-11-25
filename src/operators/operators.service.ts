@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOperatorDto, UpdateOperatorDto } from './dto/operator.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class OperatorsService {
@@ -127,10 +128,13 @@ export class OperatorsService {
 
   async createOperator(dto: CreateOperatorDto) {
     if (dto.type === 'admin') {
+      // Хешируем пароль
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      
       const admin = await this.prisma.callcentreAdmin.create({
         data: {
           login: dto.login,
-          password: dto.password,
+          password: hashedPassword,
           note: dto.note,
         },
         select: {
@@ -147,16 +151,22 @@ export class OperatorsService {
     }
 
     if (dto.type === 'operator') {
+      // Хешируем пароль
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      
       const operator = await this.prisma.callcentreOperator.create({
         data: {
           name: dto.name,
           login: dto.login,
-          password: dto.password,
+          password: hashedPassword,
           city: '',
           status: 'active',
           statusWork: dto.statusWork || 'active',
           dateCreate: new Date(),
           note: dto.note,
+          sipAddress: dto.sipAddress,
+          passport: dto.passport,
+          contract: dto.contract,
         },
         select: {
           id: true,
@@ -179,11 +189,15 @@ export class OperatorsService {
 
   async updateOperator(id: number, type: string, dto: UpdateOperatorDto) {
     if (type === 'admin') {
-      const updateData = {
+      const updateData: any = {
         ...(dto.login && { login: dto.login }),
-        ...(dto.password && { password: dto.password }),
         ...(dto.note !== undefined && { note: dto.note }),
       };
+      
+      // Хешируем пароль, если он передан
+      if (dto.password) {
+        updateData.password = await bcrypt.hash(dto.password, 10);
+      }
 
       const admin = await this.prisma.callcentreAdmin.update({
         where: { id },
@@ -203,13 +217,20 @@ export class OperatorsService {
     }
 
     if (type === 'operator') {
-      const updateData = {
+      const updateData: any = {
         ...(dto.name && { name: dto.name }),
         ...(dto.login && { login: dto.login }),
-        ...(dto.password && { password: dto.password }),
         ...(dto.statusWork && { statusWork: dto.statusWork }),
         ...(dto.note !== undefined && { note: dto.note }),
+        ...(dto.sipAddress !== undefined && { sipAddress: dto.sipAddress }),
+        ...(dto.passport !== undefined && { passport: dto.passport }),
+        ...(dto.contract !== undefined && { contract: dto.contract }),
       };
+      
+      // Хешируем пароль, если он передан
+      if (dto.password) {
+        updateData.password = await bcrypt.hash(dto.password, 10);
+      }
 
       const operator = await this.prisma.callcentreOperator.update({
         where: { id },
