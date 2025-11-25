@@ -154,28 +154,75 @@ export class OperatorsService {
       // Хешируем пароль
       const hashedPassword = await bcrypt.hash(dto.password, 10);
       
-      const operator = await this.prisma.callcentreOperator.create({
-        data: {
-          name: dto.name,
-          login: dto.login,
-          password: hashedPassword,
-          city: '',
-          status: 'active',
-          statusWork: dto.statusWork || 'active',
-          dateCreate: new Date(),
-          note: dto.note,
-          sipAddress: dto.sipAddress,
-          passport: dto.passport,
-          contract: dto.contract,
-        },
-        select: {
-          id: true,
-          name: true,
-          login: true,
-          statusWork: true,
-          dateCreate: true,
-        },
-      });
+      try {
+        const operator = await this.prisma.callcentreOperator.create({
+          data: {
+            name: dto.name,
+            login: dto.login,
+            password: hashedPassword,
+            city: '',
+            status: 'active',
+            statusWork: dto.statusWork || 'active',
+            dateCreate: new Date(),
+            note: dto.note,
+            sipAddress: dto.sipAddress,
+            passport: dto.passport,
+            contract: dto.contract,
+          },
+          select: {
+            id: true,
+            name: true,
+            login: true,
+            statusWork: true,
+            dateCreate: true,
+          },
+        });
+
+        return {
+          success: true,
+          message: 'Operator created successfully',
+          data: operator,
+        };
+      } catch (error: any) {
+        // Если ошибка связана с уникальным ограничением на ID (сбилась последовательность)
+        if (error.code === 'P2002' && error.meta?.target?.includes('id')) {
+          // Исправляем последовательность
+          await this.prisma.$executeRawUnsafe(
+            `SELECT setval('callcentre_operator_id_seq', COALESCE((SELECT MAX(id) FROM callcentre_operator), 1), true);`
+          );
+          
+          // Повторяем попытку создания
+          const operator = await this.prisma.callcentreOperator.create({
+            data: {
+              name: dto.name,
+              login: dto.login,
+              password: hashedPassword,
+              city: '',
+              status: 'active',
+              statusWork: dto.statusWork || 'active',
+              dateCreate: new Date(),
+              note: dto.note,
+              sipAddress: dto.sipAddress,
+              passport: dto.passport,
+              contract: dto.contract,
+            },
+            select: {
+              id: true,
+              name: true,
+              login: true,
+              statusWork: true,
+              dateCreate: true,
+            },
+          });
+
+          return {
+            success: true,
+            message: 'Operator created successfully',
+            data: operator,
+          };
+        }
+        throw error;
+      }
 
       return {
         success: true,
