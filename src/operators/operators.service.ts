@@ -223,12 +223,6 @@ export class OperatorsService {
         }
         throw error;
       }
-
-      return {
-        success: true,
-        message: 'Operator created successfully',
-        data: operator,
-      };
     }
 
     throw new BadRequestException('Type must be "admin" or "operator"');
