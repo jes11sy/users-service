@@ -114,8 +114,8 @@ model Order {
   expenditure           Int?
   clean                 Int?
   masterChange          Int?
-  bsoDoc                String?
-  expenditureDoc        String?
+  bsoDoc                String[]  @default([])
+  expenditureDoc        String[]  @default([])
   operatorNameId        Int
   createDate            DateTime  @default(now())
   closingData           String?
