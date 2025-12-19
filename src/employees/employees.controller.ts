@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Body, Query, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { CookieJwtAuthGuard } from '../auth/guards/cookie-jwt-auth.guard';
 import { EmployeesService } from './employees.service';
 import { RolesGuard, Roles, UserRole } from '../auth/roles.guard';
 import { CreateMasterDto, UpdateMasterDto } from '../masters/dto/master.dto';
@@ -22,7 +22,7 @@ export class EmployeesController {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get all employees (masters, directors)' })
@@ -31,7 +31,7 @@ export class EmployeesController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get employee by ID' })
@@ -40,7 +40,7 @@ export class EmployeesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Create new employee (master)' })
@@ -49,7 +49,7 @@ export class EmployeesController {
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Update employee' })

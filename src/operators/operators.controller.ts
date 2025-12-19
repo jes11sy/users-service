@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Patch, Body, Param, Query, UseGuards, HttpCode, HttpStatus, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { CookieJwtAuthGuard } from '../auth/guards/cookie-jwt-auth.guard';
 import { OperatorsService } from './operators.service';
 import { CreateOperatorDto, UpdateOperatorDto } from './dto/operator.dto';
 import { RolesGuard, Roles, UserRole } from '../auth/roles.guard';
@@ -23,7 +23,7 @@ export class OperatorsController {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Get all operators and admins' })
@@ -32,7 +32,7 @@ export class OperatorsController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Get operator/admin by ID' })
@@ -41,7 +41,7 @@ export class OperatorsController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Create new operator/admin' })
@@ -50,7 +50,7 @@ export class OperatorsController {
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Update operator/admin' })
@@ -63,7 +63,7 @@ export class OperatorsController {
   }
 
   @Patch('work-status')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(CookieJwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update operator work status (self)' })
   async updateWorkStatus(@Request() req, @Body() body: { statusWork: string }) {
@@ -71,7 +71,7 @@ export class OperatorsController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Delete operator/admin' })
