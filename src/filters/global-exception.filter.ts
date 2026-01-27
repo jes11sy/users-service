@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 // ✅ Список чувствительных полей, которые не должны логироваться
 const SENSITIVE_FIELDS = ['password', 'token', 'secret', 'apiKey', 'refreshToken', 'accessToken'];
@@ -83,9 +84,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             userAgent: request.headers['user-agent'] as string || null,
             metadata: {
               body: sanitizedBody,
-              params: request.params as Record<string, unknown>,
-              query: request.query as Record<string, unknown>,
-            } as Record<string, unknown>,
+              params: request.params,
+              query: request.query,
+            } as Prisma.InputJsonValue,
           },
         });
       } catch (dbError) {
