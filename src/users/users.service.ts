@@ -10,7 +10,8 @@ export class UsersService {
   async getProfile(user: any) {
     // Логируем только id и роль, без чувствительных данных
     this.logger.debug(`Profile requested for user: id=${user.userId}, role=${user.role}`);
-    const { id, login, role } = user;
+    // ✅ FIX: Используем правильные поля из JWT payload
+    const { userId, login, role } = user;
 
     // Получаем профиль пользователя в зависимости от роли
     let profile;

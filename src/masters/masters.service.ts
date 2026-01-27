@@ -1,14 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDto, UpdateMasterDto } from './dto/master.dto';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_SALT_ROUNDS } from '../config/security.config';
 
 @Injectable()
 export class MastersService {
   constructor(private prisma: PrismaService) {}
 
   private async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, 12);
+    return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   }
 
   private validateSearchQuery(search: string | undefined): void {
@@ -18,7 +19,7 @@ export class MastersService {
   }
 
   async getMasters(query: any, user?: any) {
-    const { city, statusWork, search } = query;
+    const { city, statusWork, search, page = 1, limit = 50 } = query;
 
     // Валидация поискового запроса
     this.validateSearchQuery(search);
@@ -50,31 +51,42 @@ export class MastersService {
       ];
     }
 
-    const masters = await this.prisma.master.findMany({
-      where,
-      orderBy: { dateCreate: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        login: true,
-        cities: true,
-        statusWork: true,
-        dateCreate: true,
-        note: true,
-        contractDoc: true,
-        passportDoc: true,
-      },
-    });
+    // ✅ FIX: Добавлена пагинация
+    const skip = (page - 1) * limit;
+    
+    const [masters, total] = await Promise.all([
+      this.prisma.master.findMany({
+        where,
+        orderBy: { dateCreate: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          cities: true,
+          statusWork: true,
+          dateCreate: true,
+          note: true,
+          contractDoc: true,
+          passportDoc: true,
+        },
+      }),
+      this.prisma.master.count({ where }),
+    ]);
 
     return {
       success: true,
       data: masters,
-      total: masters.length,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   async getEmployees(query: any, user?: any) {
-    const { search, role } = query;
+    const { search, role, page = 1, limit = 50 } = query;
 
     // Валидация поискового запроса
     this.validateSearchQuery(search);
@@ -100,12 +112,78 @@ export class MastersService {
       directorsWhere.cities = { hasSome: user.cities };
     }
 
-    // Получаем всех сотрудников (мастеров и директоров)
-    // ✅ Оптимизация: используем Promise.all для параллельного выполнения запросов
-    // Это предотвращает N+1 проблему и уменьшает время ответа
-    const [masters, directors] = await Promise.all([
+    // ✅ FIX: Если указана конкретная роль, запрашиваем только её с пагинацией
+    if (role === 'master') {
+      const skip = (page - 1) * limit;
+      const [masters, total] = await Promise.all([
+        this.prisma.master.findMany({
+          where: mastersWhere,
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            name: true,
+            login: true,
+            cities: true,
+            statusWork: true,
+            dateCreate: true,
+            note: true,
+          },
+          orderBy: { dateCreate: 'desc' },
+        }),
+        this.prisma.master.count({ where: mastersWhere }),
+      ]);
+
+      return {
+        success: true,
+        data: masters.map(m => ({ ...m, role: 'master' })),
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }
+
+    if (role === 'director') {
+      const skip = (page - 1) * limit;
+      const [directors, total] = await Promise.all([
+        this.prisma.director.findMany({
+          where: directorsWhere,
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            name: true,
+            login: true,
+            cities: true,
+            dateCreate: true,
+            note: true,
+          },
+          orderBy: { dateCreate: 'desc' },
+        }),
+        this.prisma.director.count({ where: directorsWhere }),
+      ]);
+
+      return {
+        success: true,
+        data: directors.map(d => ({ ...d, role: 'director' })),
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }
+
+    // Если роль не указана - получаем обоих с пагинацией (сложнее, т.к. две таблицы)
+    // Для простоты пагинируем каждую таблицу отдельно и объединяем
+    const halfLimit = Math.ceil(limit / 2);
+    const skip = (page - 1) * halfLimit;
+
+    const [masters, directors, mastersCount, directorsCount] = await Promise.all([
       this.prisma.master.findMany({
         where: mastersWhere,
+        skip,
+        take: halfLimit,
         select: {
           id: true,
           name: true,
@@ -119,6 +197,8 @@ export class MastersService {
       }),
       this.prisma.director.findMany({
         where: directorsWhere,
+        skip,
+        take: halfLimit,
         select: {
           id: true,
           name: true,
@@ -129,24 +209,67 @@ export class MastersService {
         },
         orderBy: { dateCreate: 'desc' },
       }),
+      this.prisma.master.count({ where: mastersWhere }),
+      this.prisma.director.count({ where: directorsWhere }),
     ]);
 
-    // Объединяем всех сотрудников
     const allEmployees = [
       ...masters.map(m => ({ ...m, role: 'master' })),
       ...directors.map(d => ({ ...d, role: 'director' })),
     ];
 
-    // Фильтруем по роли если указана
-    const filteredEmployees = role 
-      ? allEmployees.filter(emp => emp.role === role)
-      : allEmployees;
+    const total = mastersCount + directorsCount;
 
     return {
       success: true,
-      data: filteredEmployees,
-      total: filteredEmployees.length,
+      data: allEmployees,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
+  }
+
+  /**
+   * ✅ FIX IDOR: Проверяет, что директор имеет доступ к мастеру (мастер в городах директора)
+   */
+  async validateDirectorAccessToMaster(masterId: number, directorCities: string[]): Promise<void> {
+    if (!directorCities || directorCities.length === 0) {
+      throw new ForbiddenException('Director has no assigned cities');
+    }
+
+    const master = await this.prisma.master.findUnique({
+      where: { id: masterId },
+      select: { id: true, cities: true },
+    });
+
+    if (!master) {
+      throw new NotFoundException('Master not found');
+    }
+
+    // Проверяем, что хотя бы один город мастера входит в города директора
+    const hasCommonCity = master.cities.some(city => directorCities.includes(city));
+    if (!hasCommonCity) {
+      throw new ForbiddenException('You do not have access to this master');
+    }
+  }
+
+  /**
+   * ✅ FIX IDOR: Проверяет, что все указанные города мастера входят в города директора
+   */
+  validateDirectorCitiesForMaster(masterCities: string[] | undefined, directorCities: string[]): void {
+    if (!directorCities || directorCities.length === 0) {
+      throw new ForbiddenException('Director has no assigned cities');
+    }
+
+    if (!masterCities || masterCities.length === 0) {
+      return; // Пустые города допустимы
+    }
+
+    const invalidCities = masterCities.filter(city => !directorCities.includes(city));
+    if (invalidCities.length > 0) {
+      throw new ForbiddenException(`You cannot assign master to cities: ${invalidCities.join(', ')}`);
+    }
   }
 
   async getMaster(id: number) {
@@ -178,6 +301,27 @@ export class MastersService {
   }
 
   async createMaster(dto: CreateMasterDto) {
+    // ✅ FIX #85: Полная проверка уникальности login по всем таблицам
+    const [existingMaster, existingDirector, existingOperator, existingAdmin] = await Promise.all([
+      this.prisma.master.findFirst({ where: { login: dto.login }, select: { id: true } }),
+      this.prisma.director.findFirst({ where: { login: dto.login }, select: { id: true } }),
+      this.prisma.callcentreOperator.findFirst({ where: { login: dto.login }, select: { id: true } }),
+      this.prisma.callcentreAdmin.findFirst({ where: { login: dto.login }, select: { id: true } }),
+    ]);
+
+    if (existingMaster) {
+      throw new BadRequestException(`Мастер с логином "${dto.login}" уже существует`);
+    }
+    if (existingDirector) {
+      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (директор)`);
+    }
+    if (existingOperator) {
+      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (оператор)`);
+    }
+    if (existingAdmin) {
+      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (админ)`);
+    }
+
     const master = await this.prisma.master.create({
       data: {
         name: dto.name,

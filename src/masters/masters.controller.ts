@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, HttpCode, HttpStatus, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, HttpCode, HttpStatus, ForbiddenException, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CookieJwtAuthGuard } from '../auth/guards/cookie-jwt-auth.guard';
 import { MastersService } from './masters.service';
@@ -45,16 +45,24 @@ export class MastersController {
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Get master by ID' })
-  async getMaster(@Param('id') id: string) {
-    return this.mastersService.getMaster(+id);
+  async getMaster(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    // ✅ FIX IDOR: Директор может просматривать только мастеров из своих городов
+    if (req.user.role === 'director') {
+      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cities);
+    }
+    return this.mastersService.getMaster(id);
   }
 
   @Post()
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Create new master' })
-  async createMaster(@Body() dto: CreateMasterDto) {
+  async createMaster(@Body() dto: CreateMasterDto, @Request() req) {
+    // ✅ FIX IDOR: Директор может создавать мастеров только в своих городах
+    if (req.user.role === 'director') {
+      this.mastersService.validateDirectorCitiesForMaster(dto.cities, req.user.cities);
+    }
     return this.mastersService.createMaster(dto);
   }
 
@@ -63,17 +71,29 @@ export class MastersController {
   @ApiBearerAuth()
   @Roles(UserRole.DIRECTOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Update master' })
-  async updateMaster(@Param('id') id: string, @Body() dto: UpdateMasterDto) {
-    return this.mastersService.updateMaster(+id, dto);
+  async updateMaster(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDto, @Request() req) {
+    // ✅ FIX IDOR: Директор может редактировать только мастеров из своих городов
+    if (req.user.role === 'director') {
+      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cities);
+      // Также проверяем, что новые города (если указаны) в пределах городов директора
+      if (dto.cities) {
+        this.mastersService.validateDirectorCitiesForMaster(dto.cities, req.user.cities);
+      }
+    }
+    return this.mastersService.updateMaster(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete master' })
-  async deleteMaster(@Param('id') id: string) {
-    return this.mastersService.deleteMaster(+id);
+  async deleteMaster(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    // ✅ FIX IDOR: Директор может удалять только мастеров из своих городов
+    if (req.user.role === 'director') {
+      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cities);
+    }
+    return this.mastersService.deleteMaster(id);
   }
 
   @Put(':id/documents')
@@ -82,15 +102,15 @@ export class MastersController {
   @Roles(UserRole.DIRECTOR, UserRole.MASTER)
   @ApiOperation({ summary: 'Update master documents' })
   async updateDocuments(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Request() req,
     @Body() body: { contractDoc?: string; passportDoc?: string },
   ) {
     // Проверяем права доступа: мастер может редактировать только свои документы
-    if (req.user.role === UserRole.MASTER && +id !== req.user.userId) {
+    if (req.user.role === UserRole.MASTER && id !== req.user.userId) {
       throw new ForbiddenException('You can only update your own documents');
     }
-    return this.mastersService.updateDocuments(+id, body);
+    return this.mastersService.updateDocuments(id, body);
   }
 }
 

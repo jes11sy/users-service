@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { USER_EXISTS_CACHE_TTL, USER_EXISTS_CACHE_MAX_SIZE } from '../config/security.config';
 
 interface JwtPayload {
   sub: number;
@@ -11,9 +12,18 @@ interface JwtPayload {
   exp?: number;
 }
 
+interface CacheEntry {
+  exists: boolean;
+  timestamp: number;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly logger = new Logger(JwtStrategy.name);
+  
+  // ✅ FIX: In-memory кэш для проверки существования пользователей
+  // Снижает нагрузку на БД при частых запросах с одним токеном
+  private userExistsCache = new Map<string, CacheEntry>();
 
   constructor(private prisma: PrismaService) {
     // Проверяем наличие и длину JWT_SECRET
@@ -48,8 +58,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid role in token');
     }
 
-    // Проверяем существование пользователя в БД
-    const userExists = await this.validateUserExists(payload.sub, payload.role);
+    // Проверяем существование пользователя в БД (с кэшированием)
+    const userExists = await this.validateUserExistsCached(payload.sub, payload.role);
     
     if (!userExists) {
       this.logger.warn(`User not found: id=${payload.sub}, role=${payload.role}`);
@@ -61,6 +71,55 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       login: payload.login,
       role: payload.role,
     };
+  }
+
+  /**
+   * Проверяет существование пользователя с кэшированием результата
+   */
+  private async validateUserExistsCached(userId: number, role: string): Promise<boolean> {
+    const cacheKey = `${role}:${userId}`;
+    const now = Date.now();
+    
+    // Проверяем кэш
+    const cached = this.userExistsCache.get(cacheKey);
+    if (cached && (now - cached.timestamp) < USER_EXISTS_CACHE_TTL) {
+      return cached.exists;
+    }
+    
+    // Запрашиваем из БД
+    const exists = await this.validateUserExists(userId, role);
+    
+    // Очищаем кэш если превышен лимит
+    if (this.userExistsCache.size >= USER_EXISTS_CACHE_MAX_SIZE) {
+      this.cleanupCache();
+    }
+    
+    // Сохраняем в кэш
+    this.userExistsCache.set(cacheKey, { exists, timestamp: now });
+    
+    return exists;
+  }
+
+  /**
+   * Удаляет устаревшие записи из кэша
+   */
+  private cleanupCache(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.userExistsCache.entries()) {
+      if (now - entry.timestamp >= USER_EXISTS_CACHE_TTL) {
+        this.userExistsCache.delete(key);
+      }
+    }
+    
+    // Если после очистки всё ещё много записей, удаляем половину самых старых
+    if (this.userExistsCache.size >= USER_EXISTS_CACHE_MAX_SIZE * 0.9) {
+      const entries = Array.from(this.userExistsCache.entries())
+        .sort((a, b) => a[1].timestamp - b[1].timestamp);
+      const toDelete = Math.floor(entries.length / 2);
+      for (let i = 0; i < toDelete; i++) {
+        this.userExistsCache.delete(entries[i][0]);
+      }
+    }
   }
 
   private async validateUserExists(userId: number, role: string): Promise<boolean> {

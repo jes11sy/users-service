@@ -29,6 +29,9 @@ model Master {
   @@index([statusWork])
   @@index([name])
   @@index([dateCreate])
+  // ✅ FIX: GIN индекс для текстового поиска по name (требует pg_trgm extension)
+  // Создать вручную: CREATE INDEX master_name_trgm_idx ON master USING gin (name gin_trgm_ops);
+  // CREATE INDEX master_login_trgm_idx ON master USING gin (login gin_trgm_ops);
   @@map("master")
 }
 
@@ -52,6 +55,8 @@ model Director {
   
   @@index([name])
   @@index([dateCreate])
+  // ✅ FIX: GIN индекс для текстового поиска
+  // Создать вручную: CREATE INDEX director_name_trgm_idx ON director USING gin (name gin_trgm_ops);
   @@map("director")
 }
 
@@ -91,10 +96,13 @@ model CallcentreOperator {
   @@index([statusWork])
   @@index([name])
   @@index([dateCreate])
+  // ✅ FIX: GIN индекс для текстового поиска
+  // Создать вручную: CREATE INDEX callcentre_operator_name_trgm_idx ON callcentre_operator USING gin (name gin_trgm_ops);
   @@map("callcentre_operator")
 }
 
 // Order model (for relations only)
+// ✅ FIX #149: Исправлены типы для консистентности с другими сервисами
 model Order {
   id                    Int       @id @default(autoincrement())
   rk                    String
@@ -104,29 +112,29 @@ model Order {
   typeOrder             String
   clientName            String
   address               String
-  dateMeeting           String
+  dateMeeting           DateTime  // ✅ FIX: было String
   typeEquipment         String
   problem               String
   callRecord            String?
   statusOrder           String
   masterId              Int?
-  result                Int?
-  expenditure           Int?
-  clean                 Int?
-  masterChange          Int?
+  result                Decimal?  @db.Decimal(10, 2) // ✅ FIX: было Int
+  expenditure           Decimal?  @db.Decimal(10, 2) // ✅ FIX: было Int
+  clean                 Decimal?  @db.Decimal(10, 2) // ✅ FIX: было Int
+  masterChange          Decimal?  @db.Decimal(10, 2) // ✅ FIX: было Int
   bsoDoc                String[]  @default([])
   expenditureDoc        String[]  @default([])
   operatorNameId        Int
   createDate            DateTime  @default(now())
-  closingData           String?
+  closingData           DateTime? // ✅ FIX: было String
   avitoChatId           String?
   callId                String?
-  prepayment            Int?
-  dateClosmod           String?
+  prepayment            Decimal?  @db.Decimal(10, 2) // ✅ FIX: было Int
+  dateClosmod           DateTime? // ✅ FIX: было String
   comment               String?
   cashSubmissionStatus  String?
   cashSubmissionDate    DateTime?
-  cashSubmissionAmount  Int?
+  cashSubmissionAmount  Decimal?  @db.Decimal(10, 2) // ✅ FIX: было Int
   cashReceiptDoc        String?
   cashApprovedBy        Int?
   cashApprovedDate      DateTime?
@@ -134,12 +142,13 @@ model Order {
   callcentreAdminId     Int?
   callcentreOperatorId  Int?
   
-  master                Master?              @relation(fields: [masterId], references: [id])
-  director              Director?            @relation(fields: [directorId], references: [id])
-  callcentreAdmin       CallcentreAdmin?     @relation("CallcentreAdminOrders", fields: [callcentreAdminId], references: [id])
-  callcentreOperator    CallcentreOperator?  @relation("CallcentreOperatorOrders", fields: [callcentreOperatorId], references: [id])
-  avito                 Avito?               @relation(fields: [avitoChatId], references: [chatId])
-  call                  Call?                @relation(fields: [callId], references: [callId])
+  // ✅ FIX #146: Добавлены onDelete для предотвращения orphaned records
+  master                Master?              @relation(fields: [masterId], references: [id], onDelete: SetNull)
+  director              Director?            @relation(fields: [directorId], references: [id], onDelete: SetNull)
+  callcentreAdmin       CallcentreAdmin?     @relation("CallcentreAdminOrders", fields: [callcentreAdminId], references: [id], onDelete: SetNull)
+  callcentreOperator    CallcentreOperator?  @relation("CallcentreOperatorOrders", fields: [callcentreOperatorId], references: [id], onDelete: SetNull)
+  avito                 Avito?               @relation(fields: [avitoChatId], references: [chatId], onDelete: SetNull)
+  call                  Call?                @relation(fields: [callId], references: [callId], onDelete: SetNull)
   cash                  Cash?
   
   @@map("order")
@@ -182,8 +191,9 @@ model Cash {
   approvedDate      DateTime?
   createdAt         DateTime  @default(now())
   
-  order             Order     @relation(fields: [orderId], references: [id])
-  approver          Director? @relation("CashApprover", fields: [approvedBy], references: [id])
+  // ✅ FIX #146: Cascade для зависимой сущности, SetNull для справочной
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  approver          Director? @relation("CashApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
   
   @@map("cash")
 }

@@ -2,52 +2,102 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOperatorDto, UpdateOperatorDto } from './dto/operator.dto';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_SALT_ROUNDS } from '../config/security.config';
 
 @Injectable()
 export class OperatorsService {
   constructor(private prisma: PrismaService) {}
 
-  async getOperators(type?: string) {
+  // ✅ FIX #85: Проверка уникальности login по всем таблицам пользователей
+  private async checkLoginUniqueness(login: string): Promise<void> {
+    const [existingAdmin, existingOperator, existingMaster, existingDirector] = await Promise.all([
+      this.prisma.callcentreAdmin.findFirst({ where: { login }, select: { id: true } }),
+      this.prisma.callcentreOperator.findFirst({ where: { login }, select: { id: true } }),
+      this.prisma.master.findFirst({ where: { login }, select: { id: true } }),
+      this.prisma.director.findFirst({ where: { login }, select: { id: true } }),
+    ]);
+
+    if (existingAdmin) {
+      throw new BadRequestException(`Пользователь с логином "${login}" уже существует (админ)`);
+    }
+    if (existingOperator) {
+      throw new BadRequestException(`Пользователь с логином "${login}" уже существует (оператор)`);
+    }
+    if (existingMaster) {
+      throw new BadRequestException(`Пользователь с логином "${login}" уже существует (мастер)`);
+    }
+    if (existingDirector) {
+      throw new BadRequestException(`Пользователь с логином "${login}" уже существует (директор)`);
+    }
+  }
+
+  async getOperators(query: any = {}) {
+    const { type, page = 1, limit = 50 } = query;
+    const skip = (page - 1) * limit;
+
     if (type === 'admin') {
-      const admins = await this.prisma.callcentreAdmin.findMany({
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          login: true,
-          note: true,
-        },
-      });
+      const [admins, total] = await Promise.all([
+        this.prisma.callcentreAdmin.findMany({
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            login: true,
+            note: true,
+          },
+        }),
+        this.prisma.callcentreAdmin.count(),
+      ]);
 
       return {
         success: true,
         data: admins,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       };
     }
 
     if (type === 'operator') {
-      const operators = await this.prisma.callcentreOperator.findMany({
-        orderBy: { dateCreate: 'desc' },
-        select: {
-          id: true,
-          name: true,
-          login: true,
-          statusWork: true,
-          dateCreate: true,
-          sipAddress: true,
-          note: true,
-        },
-      });
+      const [operators, total] = await Promise.all([
+        this.prisma.callcentreOperator.findMany({
+          orderBy: { dateCreate: 'desc' },
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            name: true,
+            login: true,
+            statusWork: true,
+            dateCreate: true,
+            sipAddress: true,
+            note: true,
+          },
+        }),
+        this.prisma.callcentreOperator.count(),
+      ]);
 
       return {
         success: true,
         data: operators,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       };
     }
 
-    // Return both if no type specified
-    const [admins, operators] = await Promise.all([
+    // Return both if no type specified (пагинация для каждого типа отдельно)
+    const halfLimit = Math.ceil(limit / 2);
+    const halfSkip = (page - 1) * halfLimit;
+
+    const [admins, operators, adminsCount, operatorsCount] = await Promise.all([
       this.prisma.callcentreAdmin.findMany({
         orderBy: { createdAt: 'desc' },
+        skip: halfSkip,
+        take: halfLimit,
         select: {
           id: true,
           login: true,
@@ -56,6 +106,8 @@ export class OperatorsService {
       }),
       this.prisma.callcentreOperator.findMany({
         orderBy: { dateCreate: 'desc' },
+        skip: halfSkip,
+        take: halfLimit,
         select: {
           id: true,
           name: true,
@@ -65,7 +117,11 @@ export class OperatorsService {
           note: true,
         },
       }),
+      this.prisma.callcentreAdmin.count(),
+      this.prisma.callcentreOperator.count(),
     ]);
+
+    const total = adminsCount + operatorsCount;
 
     return {
       success: true,
@@ -73,6 +129,10 @@ export class OperatorsService {
         admins,
         operators,
       },
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
@@ -127,9 +187,12 @@ export class OperatorsService {
   }
 
   async createOperator(dto: CreateOperatorDto) {
+    // ✅ FIX #85: Проверка уникальности login по всем таблицам
+    await this.checkLoginUniqueness(dto.login);
+
     if (dto.type === 'admin') {
-      // Хешируем пароль
-      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      // Хешируем пароль с унифицированным количеством раундов
+      const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
       
       const admin = await this.prisma.callcentreAdmin.create({
         data: {
@@ -151,8 +214,8 @@ export class OperatorsService {
     }
 
     if (dto.type === 'operator') {
-      // Хешируем пароль
-      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      // Хешируем пароль с унифицированным количеством раундов
+      const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
       
       try {
         const operator = await this.prisma.callcentreOperator.create({
@@ -237,7 +300,7 @@ export class OperatorsService {
       
       // Хешируем пароль, если он передан
       if (dto.password) {
-        updateData.password = await bcrypt.hash(dto.password, 10);
+        updateData.password = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
       }
 
       const admin = await this.prisma.callcentreAdmin.update({
@@ -270,7 +333,7 @@ export class OperatorsService {
       
       // Хешируем пароль, если он передан
       if (dto.password) {
-        updateData.password = await bcrypt.hash(dto.password, 10);
+        updateData.password = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
       }
 
       const operator = await this.prisma.callcentreOperator.update({

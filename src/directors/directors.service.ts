@@ -1,31 +1,56 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDirectorDto, UpdateDirectorDto } from './dto/director.dto';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_SALT_ROUNDS } from '../config/security.config';
 
 @Injectable()
 export class DirectorsService {
   constructor(private prisma: PrismaService) {}
 
-  async getDirectors() {
-    const directors = await this.prisma.director.findMany({
-      orderBy: { dateCreate: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        login: true,
-        cities: true,
-        dateCreate: true,
-        tgId: true,
-        note: true,
-        contractDoc: true,
-        passportDoc: true,
-      },
-    });
+  async getDirectors(query: any = {}) {
+    const { search, page = 1, limit = 50 } = query;
+    
+    const where: any = {};
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { login: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // ✅ FIX: Добавлена пагинация
+    const skip = (page - 1) * limit;
+
+    const [directors, total] = await Promise.all([
+      this.prisma.director.findMany({
+        where,
+        orderBy: { dateCreate: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          cities: true,
+          dateCreate: true,
+          tgId: true,
+          note: true,
+          contractDoc: true,
+          passportDoc: true,
+        },
+      }),
+      this.prisma.director.count({ where }),
+    ]);
 
     return {
       success: true,
       data: directors,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
@@ -56,8 +81,29 @@ export class DirectorsService {
   }
 
   async createDirector(dto: CreateDirectorDto) {
-    // Хешируем пароль
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    // ✅ FIX #85: Полная проверка уникальности login по всем таблицам
+    const [existingDirector, existingMaster, existingOperator, existingAdmin] = await Promise.all([
+      this.prisma.director.findFirst({ where: { login: dto.login }, select: { id: true } }),
+      this.prisma.master.findFirst({ where: { login: dto.login }, select: { id: true } }),
+      this.prisma.callcentreOperator.findFirst({ where: { login: dto.login }, select: { id: true } }),
+      this.prisma.callcentreAdmin.findFirst({ where: { login: dto.login }, select: { id: true } }),
+    ]);
+
+    if (existingDirector) {
+      throw new BadRequestException(`Директор с логином "${dto.login}" уже существует`);
+    }
+    if (existingMaster) {
+      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (мастер)`);
+    }
+    if (existingOperator) {
+      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (оператор)`);
+    }
+    if (existingAdmin) {
+      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (админ)`);
+    }
+
+    // Хешируем пароль с унифицированным количеством раундов
+    const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
 
     const director = await this.prisma.director.create({
       data: {
@@ -102,7 +148,7 @@ export class DirectorsService {
     };
 
     if (dto.password) {
-      updateData.password = await bcrypt.hash(dto.password, 10);
+      updateData.password = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
     }
 
     const director = await this.prisma.director.update({

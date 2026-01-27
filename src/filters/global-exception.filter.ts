@@ -6,8 +6,34 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { FastifyRequest, FastifyReply } from 'fastify';
 import { PrismaService } from '../prisma/prisma.service';
+
+// ✅ Список чувствительных полей, которые не должны логироваться
+const SENSITIVE_FIELDS = ['password', 'token', 'secret', 'apiKey', 'refreshToken', 'accessToken'];
+
+/**
+ * Санитизирует объект, удаляя чувствительные поля
+ */
+function sanitizeObject(obj: any): any {
+  if (!obj || typeof obj !== 'object') return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeObject);
+  }
+  
+  const sanitized: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (SENSITIVE_FIELDS.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
+      sanitized[key] = '[REDACTED]';
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeObject(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+}
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -17,8 +43,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse<FastifyReply>();
+    const request = ctx.getRequest<FastifyRequest>();
 
     const status =
       exception instanceof HttpException
@@ -40,6 +66,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (status >= 500) {
       try {
+        // ✅ FIX: Санитизируем body перед логированием
+        const sanitizedBody = sanitizeObject(request.body);
+        
         await this.prisma.errorLog.create({
           data: {
             service: 'users-service',
@@ -51,9 +80,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             requestUrl: request.url,
             requestMethod: request.method,
             ip: request.ip || (request.headers['x-forwarded-for'] as string) || null,
-            userAgent: request.headers['user-agent'] || null,
+            userAgent: request.headers['user-agent'] as string || null,
             metadata: {
-              body: request.body,
+              body: sanitizedBody,
               params: request.params,
               query: request.query,
             },
@@ -69,7 +98,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       stackTrace,
     );
 
-    response.status(status).json({
+    response.status(status).send({
       success: false,
       statusCode: status,
       timestamp: new Date().toISOString(),
