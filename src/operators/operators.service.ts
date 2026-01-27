@@ -136,8 +136,21 @@ export class OperatorsService {
     };
   }
 
-  async getOperator(id: number, type: string) {
-    if (type === 'admin') {
+  async getOperator(id: number, type?: string) {
+    // Автоопределение типа, если не передан
+    let resolvedType = type;
+    if (!resolvedType) {
+      const [admin, operator] = await Promise.all([
+        this.prisma.callcentreAdmin.findUnique({ where: { id }, select: { id: true } }),
+        this.prisma.callcentreOperator.findUnique({ where: { id }, select: { id: true } }),
+      ]);
+      
+      if (admin) resolvedType = 'admin';
+      else if (operator) resolvedType = 'operator';
+      else throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    if (resolvedType === 'admin') {
       const admin = await this.prisma.callcentreAdmin.findUnique({
         where: { id },
         select: {
@@ -153,11 +166,11 @@ export class OperatorsService {
 
       return {
         success: true,
-        data: admin,
+        data: { ...admin, type: 'admin' },
       };
     }
 
-    if (type === 'operator') {
+    if (resolvedType === 'operator') {
       const operator = await this.prisma.callcentreOperator.findUnique({
         where: { id },
         select: {
@@ -179,7 +192,7 @@ export class OperatorsService {
 
       return {
         success: true,
-        data: operator,
+        data: { ...operator, type: 'operator' },
       };
     }
 
@@ -291,8 +304,21 @@ export class OperatorsService {
     throw new BadRequestException('Type must be "admin" or "operator"');
   }
 
-  async updateOperator(id: number, type: string, dto: UpdateOperatorDto) {
-    if (type === 'admin') {
+  async updateOperator(id: number, type: string | undefined, dto: UpdateOperatorDto) {
+    // Автоопределение типа, если не передан
+    let resolvedType = type;
+    if (!resolvedType) {
+      const [admin, operator] = await Promise.all([
+        this.prisma.callcentreAdmin.findUnique({ where: { id }, select: { id: true } }),
+        this.prisma.callcentreOperator.findUnique({ where: { id }, select: { id: true } }),
+      ]);
+      
+      if (admin) resolvedType = 'admin';
+      else if (operator) resolvedType = 'operator';
+      else throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    if (resolvedType === 'admin') {
       const updateData: any = {
         ...(dto.login && { login: dto.login }),
         ...(dto.note !== undefined && { note: dto.note }),
@@ -320,7 +346,7 @@ export class OperatorsService {
       };
     }
 
-    if (type === 'operator') {
+    if (resolvedType === 'operator') {
       const updateData: any = {
         ...(dto.name && { name: dto.name }),
         ...(dto.login && { login: dto.login }),
@@ -385,8 +411,21 @@ export class OperatorsService {
     };
   }
 
-  async deleteOperator(id: number, type: string) {
-    if (type === 'admin') {
+  async deleteOperator(id: number, type?: string) {
+    // Автоопределение типа, если не передан
+    let resolvedType = type;
+    if (!resolvedType) {
+      const [admin, operator] = await Promise.all([
+        this.prisma.callcentreAdmin.findUnique({ where: { id }, select: { id: true } }),
+        this.prisma.callcentreOperator.findUnique({ where: { id }, select: { id: true } }),
+      ]);
+      
+      if (admin) resolvedType = 'admin';
+      else if (operator) resolvedType = 'operator';
+      else throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    if (resolvedType === 'admin') {
       await this.prisma.callcentreAdmin.delete({
         where: { id },
       });
@@ -397,7 +436,7 @@ export class OperatorsService {
       };
     }
 
-    if (type === 'operator') {
+    if (resolvedType === 'operator') {
       await this.prisma.callcentreOperator.delete({
         where: { id },
       });
