@@ -83,9 +83,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             userAgent: request.headers['user-agent'] as string || null,
             metadata: {
               body: sanitizedBody,
-              params: request.params,
-              query: request.query,
-            },
+              params: request.params as Record<string, unknown>,
+              query: request.query as Record<string, unknown>,
+            } as Record<string, unknown>,
           },
         });
       } catch (dbError) {
