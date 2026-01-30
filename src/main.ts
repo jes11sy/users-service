@@ -59,6 +59,7 @@ async function bootstrap() {
         frameSrc: ["'none'"],
       },
     },
+    frameguard: { action: 'deny' }, // X-Frame-Options: DENY
   });
 
   // 🔥 Error logging filter (5xx errors → error_logs table)
