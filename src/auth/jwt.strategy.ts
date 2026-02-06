@@ -8,6 +8,7 @@ interface JwtPayload {
   sub: number;
   login: string;
   role: 'master' | 'director' | 'admin' | 'callcentre_admin' | 'callcentre_operator';
+  cities?: string[];
   iat?: number;
   exp?: number;
 }
@@ -70,6 +71,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       userId: payload.sub,
       login: payload.login,
       role: payload.role,
+      cities: payload.cities,
     };
   }
 
