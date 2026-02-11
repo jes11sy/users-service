@@ -80,6 +80,30 @@ export class DirectorsService {
     };
   }
 
+  /**
+   * Получить всех директоров, которые обслуживают указанный город
+   * Используется для отправки уведомлений
+   */
+  async getDirectorsByCity(city: string) {
+    const directors = await this.prisma.director.findMany({
+      where: {
+        cities: {
+          has: city, // Проверяем, что город есть в массиве cities
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        cities: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: directors,
+    };
+  }
+
   async createDirector(dto: CreateDirectorDto) {
     // ✅ FIX #85: Полная проверка уникальности login по всем таблицам
     const [existingDirector, existingMaster, existingOperator, existingAdmin] = await Promise.all([

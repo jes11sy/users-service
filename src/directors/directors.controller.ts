@@ -31,6 +31,13 @@ export class DirectorsController {
     return this.directorsService.getDirectors(query);
   }
 
+  @Get('by-city/:city')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get directors by city (internal use for notifications)' })
+  async getDirectorsByCity(@Param('city') city: string) {
+    return this.directorsService.getDirectorsByCity(city);
+  }
+
   @Get(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
