@@ -130,7 +130,7 @@ export class OperatorsService {
     if (dto.type === 'admin') {
       const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
       const admin = await this.prisma.admin.create({
-        data: { login: dto.login, password: hashedPassword, note: dto.note, role: 'admin' },
+        data: { login: dto.login, password: hashedPassword, note: dto.note, role: 'admin', name: dto.name, status: dto.status ?? 'active' },
         select: { id: true, login: true },
       });
       return { success: true, message: 'Admin created successfully', data: admin };

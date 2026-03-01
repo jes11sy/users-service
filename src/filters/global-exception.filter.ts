@@ -7,8 +7,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
 
 // ✅ Список чувствительных полей, которые не должны логироваться
 const SENSITIVE_FIELDS = ['password', 'token', 'secret', 'apiKey', 'refreshToken', 'accessToken'];
@@ -40,7 +38,7 @@ function sanitizeObject(obj: any): any {
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor() {}
 
   async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -64,35 +62,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const stackTrace =
       exception instanceof Error ? exception.stack : undefined;
-
-    if (status >= 500) {
-      try {
-        // ✅ FIX: Санитизируем body перед логированием
-        const sanitizedBody = sanitizeObject(request.body);
-        
-        await this.prisma.errorLog.create({
-          data: {
-            service: 'users-service',
-            errorType,
-            errorMessage,
-            stackTrace,
-            userId: (request as any).user?.userId || null,
-            userRole: (request as any).user?.role || null,
-            requestUrl: request.url,
-            requestMethod: request.method,
-            ip: request.ip || (request.headers['x-forwarded-for'] as string) || null,
-            userAgent: request.headers['user-agent'] as string || null,
-            metadata: {
-              body: sanitizedBody,
-              params: request.params,
-              query: request.query,
-            } as Prisma.InputJsonValue,
-          },
-        });
-      } catch (dbError) {
-        this.logger.error(`🔥 Failed to write error log to DB`, dbError);
-      }
-    }
 
     this.logger.error(
       `[users-service] ${request.method} ${request.url} - ${status} ${errorMessage}`,
