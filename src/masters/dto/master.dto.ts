@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateMasterDto {
@@ -16,15 +16,16 @@ export class CreateMasterDto {
   @IsOptional()
   password?: string;
 
-  @ApiProperty({ required: false, type: [String] })
+  @ApiProperty({ required: false, type: [Number] })
   @IsArray()
+  @IsNumber({}, { each: true })
   @IsOptional()
-  cities?: string[];
+  cityIds?: number[];
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  statusWork?: string;
+  status?: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -34,22 +35,17 @@ export class CreateMasterDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  tgId?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
   chatId?: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  passportDoc?: string;
+  passport?: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  contractDoc?: string;
+  contract?: string;
 }
 
 export class UpdateMasterDto {
@@ -68,15 +64,16 @@ export class UpdateMasterDto {
   @IsOptional()
   password?: string;
 
-  @ApiProperty({ required: false, type: [String] })
+  @ApiProperty({ required: false, type: [Number] })
   @IsArray()
+  @IsNumber({}, { each: true })
   @IsOptional()
-  cities?: string[];
+  cityIds?: number[];
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  statusWork?: string;
+  status?: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -86,22 +83,15 @@ export class UpdateMasterDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  tgId?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
   chatId?: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  passportDoc?: string;
+  passport?: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  contractDoc?: string;
+  contract?: string;
 }
-
-

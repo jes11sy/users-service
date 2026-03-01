@@ -25,7 +25,7 @@ export class MastersController {
   @Get()
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all masters' })
   async getMasters(@Query() query: GetMastersQueryDto, @Request() req) {
     return this.mastersService.getMasters(query, req.user);
@@ -34,7 +34,7 @@ export class MastersController {
   @Get('employees')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all employees (masters, directors, operators)' })
   async getEmployees(@Query() query: GetEmployeesQueryDto, @Request() req) {
     return this.mastersService.getEmployees(query, req.user);
@@ -43,12 +43,12 @@ export class MastersController {
   @Get(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get master by ID' })
   async getMaster(@Param('id', ParseIntPipe) id: number, @Request() req) {
     // ✅ FIX IDOR: Директор может просматривать только мастеров из своих городов
     if (req.user.role === 'director') {
-      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cities);
+      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cityIds);
     }
     return this.mastersService.getMaster(id);
   }
@@ -61,7 +61,7 @@ export class MastersController {
   async createMaster(@Body() dto: CreateMasterDto, @Request() req) {
     // ✅ FIX IDOR: Директор может создавать мастеров только в своих городах
     if (req.user.role === 'director') {
-      this.mastersService.validateDirectorCitiesForMaster(dto.cities, req.user.cities);
+      this.mastersService.validateDirectorCitiesForMaster(dto.cityIds, req.user.cityIds);
     }
     return this.mastersService.createMaster(dto);
   }
@@ -74,10 +74,9 @@ export class MastersController {
   async updateMaster(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDto, @Request() req) {
     // ✅ FIX IDOR: Директор может редактировать только мастеров из своих городов
     if (req.user.role === 'director') {
-      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cities);
-      // Также проверяем, что новые города (если указаны) в пределах городов директора
-      if (dto.cities) {
-        this.mastersService.validateDirectorCitiesForMaster(dto.cities, req.user.cities);
+      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cityIds);
+      if (dto.cityIds) {
+        this.mastersService.validateDirectorCitiesForMaster(dto.cityIds, req.user.cityIds);
       }
     }
     return this.mastersService.updateMaster(id, dto);
@@ -91,7 +90,7 @@ export class MastersController {
   async deleteMaster(@Param('id', ParseIntPipe) id: number, @Request() req) {
     // ✅ FIX IDOR: Директор может удалять только мастеров из своих городов
     if (req.user.role === 'director') {
-      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cities);
+      await this.mastersService.validateDirectorAccessToMaster(id, req.user.cityIds);
     }
     return this.mastersService.deleteMaster(id);
   }
@@ -104,7 +103,7 @@ export class MastersController {
   async updateDocuments(
     @Param('id', ParseIntPipe) id: number,
     @Request() req,
-    @Body() body: { contractDoc?: string; passportDoc?: string },
+    @Body() body: { contract?: string; passport?: string },
   ) {
     // Проверяем права доступа: мастер может редактировать только свои документы
     if (req.user.role === UserRole.MASTER && id !== req.user.userId) {

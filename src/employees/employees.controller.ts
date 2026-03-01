@@ -24,7 +24,7 @@ export class EmployeesController {
   @Get()
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all employees (masters, directors)' })
   async getEmployees(@Query() query: any) {
     return this.employeesService.getEmployees(query);
@@ -33,7 +33,7 @@ export class EmployeesController {
   @Get(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get employee by ID' })
   @ApiQuery({ name: 'role', required: false, enum: ['master', 'director'], description: 'Роль сотрудника для точного поиска' })
   async getEmployee(

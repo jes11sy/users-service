@@ -19,29 +19,22 @@ export class MastersService {
   }
 
   async getMasters(query: any, user?: any) {
-    const { city, statusWork, search, page = 1, limit = 50 } = query;
-
-    // Валидация поискового запроса
+    const { cityId, status, search, page = 1, limit = 50 } = query;
     this.validateSearchQuery(search);
 
     const where: any = {};
 
-    // Фильтрация по городам директора
-    if (user?.role === 'director' && user?.cities && user.cities.length > 0) {
-      // Для директора показываем только мастеров его городов
-      where.cities = { hasSome: user.cities };
-      
-      // Если директор дополнительно фильтрует по конкретному городу из своего списка
-      if (city && user.cities.includes(city)) {
-        where.cities = { has: city };
+    if (user?.role === 'director' && user?.cityIds && user.cityIds.length > 0) {
+      where.cityIds = { hasSome: user.cityIds };
+      if (cityId && user.cityIds.includes(Number(cityId))) {
+        where.cityIds = { has: Number(cityId) };
       }
-    } else if (city) {
-      // Для админа можно фильтровать по любому городу
-      where.cities = { has: city };
+    } else if (cityId) {
+      where.cityIds = { has: Number(cityId) };
     }
 
-    if (statusWork) {
-      where.statusWork = statusWork;
+    if (status) {
+      where.status = status;
     }
 
     if (search) {
@@ -51,47 +44,29 @@ export class MastersService {
       ];
     }
 
-    // ✅ FIX: Добавлена пагинация
     const skip = (page - 1) * limit;
-    
+
     const [masters, total] = await Promise.all([
       this.prisma.master.findMany({
         where,
-        orderBy: { dateCreate: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
         select: {
-          id: true,
-          name: true,
-          login: true,
-          cities: true,
-          statusWork: true,
-          dateCreate: true,
-          note: true,
-          contractDoc: true,
-          passportDoc: true,
+          id: true, name: true, login: true, cityIds: true,
+          status: true, note: true, contract: true, passport: true, createdAt: true,
         },
       }),
       this.prisma.master.count({ where }),
     ]);
 
-    return {
-      success: true,
-      data: masters,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return { success: true, data: masters, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async getEmployees(query: any, user?: any) {
     const { search, role, page = 1, limit = 50 } = query;
-
-    // Валидация поискового запроса
     this.validateSearchQuery(search);
 
-    // Формируем условие для фильтрации по городам директора
     const mastersWhere: any = search ? {
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
@@ -106,13 +81,11 @@ export class MastersService {
       ],
     } : {};
 
-    // Для директора показываем только сотрудников его городов
-    if (user?.role === 'director' && user?.cities && user.cities.length > 0) {
-      mastersWhere.cities = { hasSome: user.cities };
-      directorsWhere.cities = { hasSome: user.cities };
+    if (user?.role === 'director' && user?.cityIds && user.cityIds.length > 0) {
+      mastersWhere.cityIds = { hasSome: user.cityIds };
+      directorsWhere.cityIds = { hasSome: user.cityIds };
     }
 
-    // ✅ FIX: Если указана конкретная роль, запрашиваем только её с пагинацией
     if (role === 'master') {
       const skip = (page - 1) * limit;
       const [masters, total] = await Promise.all([
@@ -120,16 +93,8 @@ export class MastersService {
           where: mastersWhere,
           skip,
           take: limit,
-          select: {
-            id: true,
-            name: true,
-            login: true,
-            cities: true,
-            statusWork: true,
-            dateCreate: true,
-            note: true,
-          },
-          orderBy: { dateCreate: 'desc' },
+          select: { id: true, name: true, login: true, cityIds: true, status: true, note: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
         }),
         this.prisma.master.count({ where: mastersWhere }),
       ]);
@@ -137,10 +102,7 @@ export class MastersService {
       return {
         success: true,
         data: masters.map(m => ({ ...m, role: 'master' })),
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        total, page, limit, totalPages: Math.ceil(total / limit),
       };
     }
 
@@ -151,15 +113,8 @@ export class MastersService {
           where: directorsWhere,
           skip,
           take: limit,
-          select: {
-            id: true,
-            name: true,
-            login: true,
-            cities: true,
-            dateCreate: true,
-            note: true,
-          },
-          orderBy: { dateCreate: 'desc' },
+          select: { id: true, name: true, login: true, cityIds: true, note: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
         }),
         this.prisma.director.count({ where: directorsWhere }),
       ]);
@@ -167,15 +122,10 @@ export class MastersService {
       return {
         success: true,
         data: directors.map(d => ({ ...d, role: 'director' })),
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        total, page, limit, totalPages: Math.ceil(total / limit),
       };
     }
 
-    // Если роль не указана - получаем обоих с пагинацией (сложнее, т.к. две таблицы)
-    // Для простоты пагинируем каждую таблицу отдельно и объединяем
     const halfLimit = Math.ceil(limit / 2);
     const skip = (page - 1) * halfLimit;
 
@@ -184,91 +134,57 @@ export class MastersService {
         where: mastersWhere,
         skip,
         take: halfLimit,
-        select: {
-          id: true,
-          name: true,
-          login: true,
-          cities: true,
-          statusWork: true,
-          dateCreate: true,
-          note: true,
-        },
-        orderBy: { dateCreate: 'desc' },
+        select: { id: true, name: true, login: true, cityIds: true, status: true, note: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.director.findMany({
         where: directorsWhere,
         skip,
         take: halfLimit,
-        select: {
-          id: true,
-          name: true,
-          login: true,
-          cities: true,
-          dateCreate: true,
-          note: true,
-        },
-        orderBy: { dateCreate: 'desc' },
+        select: { id: true, name: true, login: true, cityIds: true, note: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.master.count({ where: mastersWhere }),
       this.prisma.director.count({ where: directorsWhere }),
     ]);
 
-    const allEmployees = [
-      ...masters.map(m => ({ ...m, role: 'master' })),
-      ...directors.map(d => ({ ...d, role: 'director' })),
-    ];
-
-    const total = mastersCount + directorsCount;
-
     return {
       success: true,
-      data: allEmployees,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      data: [
+        ...masters.map(m => ({ ...m, role: 'master' })),
+        ...directors.map(d => ({ ...d, role: 'director' })),
+      ],
+      total: mastersCount + directorsCount,
+      page, limit,
+      totalPages: Math.ceil((mastersCount + directorsCount) / limit),
     };
   }
 
-  /**
-   * ✅ FIX IDOR: Проверяет, что директор имеет доступ к мастеру (мастер в городах директора)
-   */
-  async validateDirectorAccessToMaster(masterId: number, directorCities: string[]): Promise<void> {
-    if (!directorCities || directorCities.length === 0) {
+  async validateDirectorAccessToMaster(masterId: number, directorCityIds: number[]): Promise<void> {
+    if (!directorCityIds || directorCityIds.length === 0) {
       throw new ForbiddenException('Director has no assigned cities');
     }
 
     const master = await this.prisma.master.findUnique({
       where: { id: masterId },
-      select: { id: true, cities: true },
+      select: { id: true, cityIds: true },
     });
 
-    if (!master) {
-      throw new NotFoundException('Master not found');
-    }
+    if (!master) throw new NotFoundException('Master not found');
 
-    // Проверяем, что хотя бы один город мастера входит в города директора
-    const hasCommonCity = master.cities.some(city => directorCities.includes(city));
-    if (!hasCommonCity) {
-      throw new ForbiddenException('You do not have access to this master');
-    }
+    const hasCommonCity = master.cityIds.some(id => directorCityIds.includes(id));
+    if (!hasCommonCity) throw new ForbiddenException('You do not have access to this master');
   }
 
-  /**
-   * ✅ FIX IDOR: Проверяет, что все указанные города мастера входят в города директора
-   */
-  validateDirectorCitiesForMaster(masterCities: string[] | undefined, directorCities: string[]): void {
-    if (!directorCities || directorCities.length === 0) {
+  validateDirectorCitiesForMaster(masterCityIds: number[] | undefined, directorCityIds: number[]): void {
+    if (!directorCityIds || directorCityIds.length === 0) {
       throw new ForbiddenException('Director has no assigned cities');
     }
+    if (!masterCityIds || masterCityIds.length === 0) return;
 
-    if (!masterCities || masterCities.length === 0) {
-      return; // Пустые города допустимы
-    }
-
-    const invalidCities = masterCities.filter(city => !directorCities.includes(city));
-    if (invalidCities.length > 0) {
-      throw new ForbiddenException(`You cannot assign master to cities: ${invalidCities.join(', ')}`);
+    const invalidIds = masterCityIds.filter(id => !directorCityIds.includes(id));
+    if (invalidIds.length > 0) {
+      throw new ForbiddenException(`You cannot assign master to city IDs: ${invalidIds.join(', ')}`);
     }
   }
 
@@ -276,144 +192,83 @@ export class MastersService {
     const master = await this.prisma.master.findUnique({
       where: { id },
       select: {
-        id: true,
-        name: true,
-        login: true,
-        cities: true,
-        statusWork: true,
-        dateCreate: true,
-        tgId: true,
-        chatId: true,
-        note: true,
-        contractDoc: true,
-        passportDoc: true,
+        id: true, name: true, login: true, cityIds: true,
+        status: true, chatId: true, note: true, contract: true, passport: true, createdAt: true,
       },
     });
 
-    if (!master) {
-      throw new NotFoundException('Master not found');
-    }
-
-    return {
-      success: true,
-      data: master,
-    };
+    if (!master) throw new NotFoundException('Master not found');
+    return { success: true, data: master };
   }
 
   async createMaster(dto: CreateMasterDto) {
-    // ✅ FIX #85: Полная проверка уникальности login по всем таблицам
     const [existingMaster, existingDirector, existingOperator, existingAdmin] = await Promise.all([
       this.prisma.master.findFirst({ where: { login: dto.login }, select: { id: true } }),
       this.prisma.director.findFirst({ where: { login: dto.login }, select: { id: true } }),
-      this.prisma.callcentreOperator.findFirst({ where: { login: dto.login }, select: { id: true } }),
-      this.prisma.callcentreAdmin.findFirst({ where: { login: dto.login }, select: { id: true } }),
+      this.prisma.operator.findFirst({ where: { login: dto.login }, select: { id: true } }),
+      this.prisma.admin.findFirst({ where: { login: dto.login }, select: { id: true } }),
     ]);
 
-    if (existingMaster) {
-      throw new BadRequestException(`Мастер с логином "${dto.login}" уже существует`);
-    }
-    if (existingDirector) {
-      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (директор)`);
-    }
-    if (existingOperator) {
-      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (оператор)`);
-    }
-    if (existingAdmin) {
-      throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (админ)`);
-    }
+    if (existingMaster) throw new BadRequestException(`Мастер с логином "${dto.login}" уже существует`);
+    if (existingDirector) throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (директор)`);
+    if (existingOperator) throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (оператор)`);
+    if (existingAdmin) throw new BadRequestException(`Пользователь с логином "${dto.login}" уже существует (админ)`);
 
     const master = await this.prisma.master.create({
       data: {
         name: dto.name,
         login: dto.login,
         password: dto.password ? await this.hashPassword(dto.password) : null,
-        cities: dto.cities || [],
-        statusWork: dto.statusWork || 'работает',
+        role: 'master',
+        cityIds: dto.cityIds || [],
+        status: dto.status || 'active',
         note: dto.note,
+        chatId: dto.chatId,
+        passport: dto.passport,
+        contract: dto.contract,
       },
-      select: {
-        id: true,
-        name: true,
-        login: true,
-        cities: true,
-        statusWork: true,
-        dateCreate: true,
-      },
+      select: { id: true, name: true, login: true, cityIds: true, status: true, createdAt: true },
     });
 
-    return {
-      success: true,
-      message: 'Master created successfully',
-      data: master,
-    };
+    return { success: true, message: 'Master created successfully', data: master };
   }
 
   async updateMaster(id: number, dto: UpdateMasterDto) {
     const updateData: any = {
       ...(dto.name && { name: dto.name }),
       ...(dto.login && { login: dto.login }),
-      ...(dto.cities && { cities: dto.cities }),
-      ...(dto.statusWork && { statusWork: dto.statusWork }),
+      ...(dto.cityIds && { cityIds: dto.cityIds }),
+      ...(dto.status && { status: dto.status }),
       ...(dto.note !== undefined && { note: dto.note }),
+      ...(dto.chatId !== undefined && { chatId: dto.chatId }),
     };
 
-    // Хэшируем пароль если он передан
-    if (dto.password) {
-      updateData.password = await this.hashPassword(dto.password);
-    }
+    if (dto.password) updateData.password = await this.hashPassword(dto.password);
 
     const master = await this.prisma.master.update({
       where: { id },
       data: updateData,
-      select: {
-        id: true,
-        name: true,
-        login: true,
-        cities: true,
-        statusWork: true,
-        note: true,
-      },
+      select: { id: true, name: true, login: true, cityIds: true, status: true, note: true },
     });
 
-    return {
-      success: true,
-      message: 'Master updated successfully',
-      data: master,
-    };
+    return { success: true, message: 'Master updated successfully', data: master };
   }
 
   async deleteMaster(id: number) {
-    await this.prisma.master.delete({
-      where: { id },
-    });
-
-    return {
-      success: true,
-      message: 'Master deleted successfully',
-    };
+    await this.prisma.master.delete({ where: { id } });
+    return { success: true, message: 'Master deleted successfully' };
   }
 
-  async updateDocuments(id: number, body: { contractDoc?: string; passportDoc?: string }) {
+  async updateDocuments(id: number, body: { contract?: string; passport?: string }) {
     const master = await this.prisma.master.update({
       where: { id },
       data: {
-        ...(body.contractDoc && { contractDoc: body.contractDoc }),
-        ...(body.passportDoc && { passportDoc: body.passportDoc }),
+        ...(body.contract !== undefined && { contract: body.contract }),
+        ...(body.passport !== undefined && { passport: body.passport }),
       },
-      select: {
-        id: true,
-        name: true,
-        contractDoc: true,
-        passportDoc: true,
-      },
+      select: { id: true, name: true, contract: true, passport: true },
     });
 
-    return {
-      success: true,
-      message: 'Documents updated successfully',
-      data: master,
-    };
+    return { success: true, message: 'Documents updated successfully', data: master };
   }
 }
-
-

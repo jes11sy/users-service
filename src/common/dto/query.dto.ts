@@ -21,17 +21,17 @@ export class PaginationDto {
 }
 
 export class GetMastersQueryDto extends PaginationDto {
-  @ApiProperty({ required: false, description: 'Фильтр по городу' })
+  @ApiProperty({ required: false, description: 'Фильтр по ID города' })
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  city?: string;
+  @IsInt()
+  @Type(() => Number)
+  cityId?: number;
 
-  @ApiProperty({ required: false, description: 'Фильтр по статусу работы' })
+  @ApiProperty({ required: false, description: 'Фильтр по статусу (active/inactive)' })
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  statusWork?: string;
+  status?: string;
 
   @ApiProperty({ required: false, description: 'Поисковый запрос', maxLength: 100 })
   @IsOptional()

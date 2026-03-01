@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateDirectorDto {
@@ -14,9 +14,11 @@ export class CreateDirectorDto {
   @IsString()
   password: string;
 
-  @ApiProperty({ required: false, type: [String] })
+  @ApiProperty({ required: false, type: [Number] })
+  @IsArray()
+  @IsNumber({}, { each: true })
   @IsOptional()
-  cities?: string[];
+  cityIds?: number[];
 
   @ApiProperty({ required: false })
   @IsString()
@@ -26,12 +28,12 @@ export class CreateDirectorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  passportDoc?: string;
+  passport?: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  contractDoc?: string;
+  contract?: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -55,9 +57,11 @@ export class UpdateDirectorDto {
   @IsOptional()
   password?: string;
 
-  @ApiProperty({ required: false, type: [String] })
+  @ApiProperty({ required: false, type: [Number] })
+  @IsArray()
+  @IsNumber({}, { each: true })
   @IsOptional()
-  cities?: string[];
+  cityIds?: number[];
 
   @ApiProperty({ required: false })
   @IsString()
@@ -67,19 +71,15 @@ export class UpdateDirectorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  passportDoc?: string;
+  passport?: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  contractDoc?: string;
+  contract?: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   note?: string;
 }
-
-
-
-

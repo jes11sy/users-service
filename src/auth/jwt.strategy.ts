@@ -7,8 +7,8 @@ import { USER_EXISTS_CACHE_TTL, USER_EXISTS_CACHE_MAX_SIZE } from '../config/sec
 interface JwtPayload {
   sub: number;
   login: string;
-  role: 'master' | 'director' | 'admin' | 'callcentre_admin' | 'callcentre_operator';
-  cities?: string[];
+  role: 'master' | 'director' | 'admin' | 'operator';
+  cityIds?: number[];
   iat?: number;
   exp?: number;
 }
@@ -53,7 +53,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Проверка валидности роли
-    const validRoles = ['master', 'director', 'admin', 'callcentre_admin', 'callcentre_operator'];
+    const validRoles = ['master', 'director', 'admin', 'operator'];
     if (!validRoles.includes(payload.role)) {
       this.logger.warn(`Invalid role in JWT: ${payload.role}`);
       throw new UnauthorizedException('Invalid role in token');
@@ -71,7 +71,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       userId: payload.sub,
       login: payload.login,
       role: payload.role,
-      cities: payload.cities,
+      cityIds: payload.cityIds,
     };
   }
 
@@ -142,15 +142,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           return !!director;
 
         case 'admin':
-        case 'callcentre_admin':
-          const admin = await this.prisma.callcentreAdmin.findUnique({
+          const admin = await this.prisma.admin.findUnique({
             where: { id: userId },
             select: { id: true },
           });
           return !!admin;
 
-        case 'callcentre_operator':
-          const operator = await this.prisma.callcentreOperator.findUnique({
+        case 'operator':
+          const operator = await this.prisma.operator.findUnique({
             where: { id: userId },
             select: { id: true },
           });

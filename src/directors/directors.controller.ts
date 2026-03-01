@@ -25,23 +25,23 @@ export class DirectorsController {
   @Get()
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all directors' })
   async getDirectors(@Query() query: GetDirectorsQueryDto) {
     return this.directorsService.getDirectors(query);
   }
 
-  @Get('by-city/:city')
+  @Get('by-city/:cityId')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get directors by city (internal use for notifications)' })
-  async getDirectorsByCity(@Param('city') city: string) {
-    return this.directorsService.getDirectorsByCity(city);
+  @ApiOperation({ summary: 'Get directors by cityId (internal use for notifications)' })
+  async getDirectorsByCityId(@Param('cityId', ParseIntPipe) cityId: number) {
+    return this.directorsService.getDirectorsByCityId(cityId);
   }
 
   @Get(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.DIRECTOR, UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.DIRECTOR, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get director by ID' })
   async getDirector(@Param('id', ParseIntPipe) id: number, @Request() req) {
     // ✅ FIX IDOR: Директор может просматривать только себя
@@ -54,7 +54,7 @@ export class DirectorsController {
   @Post()
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create new director' })
   async createDirector(@Body() dto: CreateDirectorDto) {
     return this.directorsService.createDirector(dto);
@@ -76,7 +76,7 @@ export class DirectorsController {
   @Delete(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete director' })
   async deleteDirector(@Param('id', ParseIntPipe) id: number, @Request() req) {
     // ✅ FIX: Защита от самоудаления - директор не может удалить сам себя

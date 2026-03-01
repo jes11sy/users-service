@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsIn } from 'class-validator';
+import { IsString, IsOptional, IsIn, IsArray, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateOperatorDto {
@@ -22,7 +22,7 @@ export class CreateOperatorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  statusWork?: string;
+  status?: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -43,6 +43,12 @@ export class CreateOperatorDto {
   @IsString()
   @IsOptional()
   contract?: string;
+
+  @ApiProperty({ required: false, type: [Number] })
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @IsOptional()
+  cityIds?: number[];
 }
 
 export class UpdateOperatorDto {
@@ -64,7 +70,7 @@ export class UpdateOperatorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  statusWork?: string;
+  status?: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -85,25 +91,10 @@ export class UpdateOperatorDto {
   @IsString()
   @IsOptional()
   contract?: string;
+
+  @ApiProperty({ required: false, type: [Number] })
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @IsOptional()
+  cityIds?: number[];
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
