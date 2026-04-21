@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDto, UpdateMasterDto } from './dto/master.dto';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '../config/security.config';
+import { attachCityIds, getUserCityIds, getUserCityIdsMap, getUserIdsByCityIds, syncUserCityIds } from '../common/user-cities';
 
 @Injectable()
 export class MastersService {
@@ -22,6 +23,16 @@ export class MastersService {
     return Array.isArray(user?.cityIds) ? user.cityIds : [];
   }
 
+  private async enrichMasters<T extends { id: number }>(masters: T[]): Promise<Array<T & { cityIds: number[] }>> {
+    const cityIdsMap = await getUserCityIdsMap(this.prisma, 'master', masters.map((master) => master.id));
+    return attachCityIds(masters, cityIdsMap);
+  }
+
+  private async enrichDirectors<T extends { id: number }>(directors: T[]): Promise<Array<T & { cityIds: number[] }>> {
+    const cityIdsMap = await getUserCityIdsMap(this.prisma, 'director', directors.map((director) => director.id));
+    return attachCityIds(directors, cityIdsMap);
+  }
+
   async getMasters(query: any, user?: any) {
     const { cityId, status, search, page = 1, limit = 50 } = query;
     this.validateSearchQuery(search);
@@ -32,16 +43,22 @@ export class MastersService {
 
     // Фильтрация по городам директора
     const userCityIds = this.getUserCityIds(user);
+    let requestedCityIds: number[] = [];
     if (user?.role === 'director' && userCityIds.length > 0) {
-      where.cityIds = { hasSome: userCityIds };
-      
+      requestedCityIds = userCityIds;
+
       // Если директор дополнительно фильтрует по конкретному городу из своего списка
       if (cityId && userCityIds.includes(Number(cityId))) {
-        where.cityIds = { has: Number(cityId) };
+        requestedCityIds = [Number(cityId)];
       }
     } else if (cityId) {
       // Для админа можно фильтровать по любому городу
-      where.cityIds = { has: Number(cityId) };
+      requestedCityIds = [Number(cityId)];
+    }
+
+    if (requestedCityIds.length > 0) {
+      const masterIds = await getUserIdsByCityIds(this.prisma, 'master', requestedCityIds);
+      where.id = { in: masterIds };
     }
 
     if (status) {
@@ -67,7 +84,6 @@ export class MastersService {
           id: true,
           name: true,
           login: true,
-          cityIds: true,
           status: true,
           createdAt: true,
           note: true,
@@ -79,7 +95,14 @@ export class MastersService {
       this.prisma.master.count({ where }),
     ]);
 
-    return { success: true, data: masters, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return {
+      success: true,
+      data: await this.enrichMasters(masters),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getEmployees(query: any, user?: any) {
@@ -110,8 +133,12 @@ export class MastersService {
     // Для директора показываем только сотрудников его городов
     const userCityIds = this.getUserCityIds(user);
     if (user?.role === 'director' && userCityIds.length > 0) {
-      mastersWhere.cityIds = { hasSome: userCityIds };
-      directorsWhere.cityIds = { hasSome: userCityIds };
+      const [masterIds, directorIds] = await Promise.all([
+        getUserIdsByCityIds(this.prisma, 'master', userCityIds),
+        getUserIdsByCityIds(this.prisma, 'director', userCityIds),
+      ]);
+      mastersWhere.id = { in: masterIds };
+      directorsWhere.id = { in: directorIds };
     }
 
     if (role === 'master') {
@@ -125,7 +152,6 @@ export class MastersService {
             id: true,
             name: true,
             login: true,
-            cityIds: true,
             status: true,
             createdAt: true,
             note: true,
@@ -135,9 +161,10 @@ export class MastersService {
         this.prisma.master.count({ where: mastersWhere }),
       ]);
 
+      const mastersWithCities = await this.enrichMasters(masters);
       return {
         success: true,
-        data: masters.map(m => ({ ...m, role: 'master' })),
+        data: mastersWithCities.map(m => ({ ...m, role: 'master' })),
         total, page, limit, totalPages: Math.ceil(total / limit),
       };
     }
@@ -153,7 +180,6 @@ export class MastersService {
             id: true,
             name: true,
             login: true,
-            cityIds: true,
             createdAt: true,
             note: true,
           },
@@ -162,9 +188,10 @@ export class MastersService {
         this.prisma.director.count({ where: directorsWhere }),
       ]);
 
+      const directorsWithCities = await this.enrichDirectors(directors);
       return {
         success: true,
-        data: directors.map(d => ({ ...d, role: 'director' })),
+        data: directorsWithCities.map(d => ({ ...d, role: 'director' })),
         total, page, limit, totalPages: Math.ceil(total / limit),
       };
     }
@@ -181,7 +208,6 @@ export class MastersService {
           id: true,
           name: true,
           login: true,
-          cityIds: true,
           status: true,
           createdAt: true,
           note: true,
@@ -196,7 +222,6 @@ export class MastersService {
           id: true,
           name: true,
           login: true,
-          cityIds: true,
           createdAt: true,
           note: true,
         },
@@ -206,11 +231,16 @@ export class MastersService {
       this.prisma.director.count({ where: directorsWhere }),
     ]);
 
+    const [mastersWithCities, directorsWithCities] = await Promise.all([
+      this.enrichMasters(masters),
+      this.enrichDirectors(directors),
+    ]);
+
     return {
       success: true,
       data: [
-        ...masters.map(m => ({ ...m, role: 'master' })),
-        ...directors.map(d => ({ ...d, role: 'director' })),
+        ...mastersWithCities.map(m => ({ ...m, role: 'master' })),
+        ...directorsWithCities.map(d => ({ ...d, role: 'director' })),
       ],
       total: mastersCount + directorsCount,
       page, limit,
@@ -228,13 +258,15 @@ export class MastersService {
 
     const master = await this.prisma.master.findUnique({
       where: { id: masterId },
-      select: { id: true, cityIds: true },
+      select: { id: true },
     });
 
     if (!master) throw new NotFoundException('Master not found');
 
+    const masterCityIds = await getUserCityIds(this.prisma, 'master', master.id);
+
     // Проверяем, что хотя бы один город мастера входит в города директора
-    const hasCommonCity = master.cityIds.some((cityId) => directorCityIds.includes(cityId));
+    const hasCommonCity = masterCityIds.some((cityId) => directorCityIds.includes(cityId));
     if (!hasCommonCity) {
       throw new ForbiddenException('You do not have access to this master');
     }
@@ -258,7 +290,6 @@ export class MastersService {
         id: true,
         name: true,
         login: true,
-        cityIds: true,
         status: true,
         createdAt: true,
         chatId: true,
@@ -269,7 +300,7 @@ export class MastersService {
     });
 
     if (!master) throw new NotFoundException('Master not found');
-    return { success: true, data: master };
+    return { success: true, data: { ...master, cityIds: await getUserCityIds(this.prisma, 'master', master.id) } };
   }
 
   async createMaster(dto: CreateMasterDto) {
@@ -292,7 +323,6 @@ export class MastersService {
         login: dto.login,
         password: dto.password ? await this.hashPassword(dto.password) : null,
         status: dto.status || 'active',
-        cityIds: dto.cityIds || [],
         note: dto.note,
         chatId: dto.chatId,
         passport: dto.passport,
@@ -302,20 +332,24 @@ export class MastersService {
         id: true,
         name: true,
         login: true,
-        cityIds: true,
         status: true,
         createdAt: true,
       },
     });
 
-    return { success: true, message: 'Master created successfully', data: master };
+    await syncUserCityIds(this.prisma, 'master', master.id, dto.cityIds);
+
+    return {
+      success: true,
+      message: 'Master created successfully',
+      data: { ...master, cityIds: dto.cityIds ?? [] },
+    };
   }
 
   async updateMaster(id: number, dto: UpdateMasterDto) {
     const updateData: any = {
       ...(dto.name && { name: dto.name }),
       ...(dto.login && { login: dto.login }),
-      ...(dto.cityIds && { cityIds: dto.cityIds }),
       ...(dto.status && { status: dto.status }),
       ...(dto.note !== undefined && { note: dto.note }),
       ...(dto.chatId !== undefined && { chatId: dto.chatId }),
@@ -332,7 +366,6 @@ export class MastersService {
         id: true,
         name: true,
         login: true,
-        cityIds: true,
         status: true,
         note: true,
         chatId: true,
@@ -341,7 +374,16 @@ export class MastersService {
       },
     });
 
-    return { success: true, message: 'Master updated successfully', data: master };
+    await syncUserCityIds(this.prisma, 'master', id, dto.cityIds);
+
+    return {
+      success: true,
+      message: 'Master updated successfully',
+      data: {
+        ...master,
+        cityIds: dto.cityIds ?? await getUserCityIds(this.prisma, 'master', id),
+      },
+    };
   }
 
   async deleteMaster(id: number) {

@@ -4,6 +4,7 @@ import { CreateMasterDto, UpdateMasterDto } from '../masters/dto/master.dto';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '../config/security.config';
 import { MastersService } from '../masters/masters.service';
+import { getUserCityIds, syncUserCityIds } from '../common/user-cities';
 
 @Injectable()
 export class EmployeesService {
@@ -29,7 +30,6 @@ export class EmployeesService {
           id: true,
           name: true,
           login: true,
-          cityIds: true,
           status: true,
           createdAt: true,
           note: true,
@@ -39,7 +39,16 @@ export class EmployeesService {
         },
       });
 
-      if (master) return { success: true, data: { ...master, role: 'master' } };
+      if (master) {
+        return {
+          success: true,
+          data: {
+            ...master,
+            cityIds: await getUserCityIds(this.prisma, 'master', master.id),
+            role: 'master',
+          },
+        };
+      }
     }
 
     if (role === 'director' || !role) {
@@ -49,7 +58,6 @@ export class EmployeesService {
           id: true,
           name: true,
           login: true,
-          cityIds: true,
           createdAt: true,
           status: true,
           note: true,
@@ -59,7 +67,16 @@ export class EmployeesService {
         },
       });
 
-      if (director) return { success: true, data: { ...director, role: 'director' } };
+      if (director) {
+        return {
+          success: true,
+          data: {
+            ...director,
+            cityIds: await getUserCityIds(this.prisma, 'director', director.id),
+            role: 'director',
+          },
+        };
+      }
     }
 
     throw new NotFoundException('Employee not found');
@@ -84,7 +101,6 @@ export class EmployeesService {
         name: dto.name,
         login: dto.login,
         password: dto.password ? await this.hashPassword(dto.password) : null,
-        cityIds: dto.cityIds || [],
         status: dto.status || 'active',
         note: dto.note,
         chatId: dto.chatId,
@@ -95,7 +111,6 @@ export class EmployeesService {
         id: true,
         name: true,
         login: true,
-        cityIds: true,
         status: true,
         createdAt: true,
         note: true,
@@ -105,7 +120,13 @@ export class EmployeesService {
       },
     });
 
-    return { success: true, message: 'Employee created successfully', data: { ...master, role: 'master' } };
+    await syncUserCityIds(this.prisma, 'master', master.id, dto.cityIds);
+
+    return {
+      success: true,
+      message: 'Employee created successfully',
+      data: { ...master, cityIds: dto.cityIds ?? [], role: 'master' },
+    };
   }
 
   async updateEmployee(id: number, dto: UpdateMasterDto) {
@@ -115,7 +136,6 @@ export class EmployeesService {
     const updateData: any = {
       ...(dto.name && { name: dto.name }),
       ...(dto.login && { login: dto.login }),
-      ...(dto.cityIds && { cityIds: dto.cityIds }),
       ...(dto.status && { status: dto.status }),
       ...(dto.note !== undefined && { note: dto.note }),
       ...(dto.chatId !== undefined && { chatId: dto.chatId }),
@@ -132,7 +152,6 @@ export class EmployeesService {
         id: true,
         name: true,
         login: true,
-        cityIds: true,
         status: true,
         note: true,
         chatId: true,
@@ -141,6 +160,16 @@ export class EmployeesService {
       },
     });
 
-    return { success: true, message: 'Employee updated successfully', data: { ...updated, role: 'master' } };
+    await syncUserCityIds(this.prisma, 'master', id, dto.cityIds);
+
+    return {
+      success: true,
+      message: 'Employee updated successfully',
+      data: {
+        ...updated,
+        cityIds: dto.cityIds ?? await getUserCityIds(this.prisma, 'master', id),
+        role: 'master',
+      },
+    };
   }
 }

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateOperatorDto, UpdateOperatorDto } from './dto/operator.dto';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '../config/security.config';
+import { getUserCityIds, syncUserCityIds } from '../common/user-cities';
 
 @Injectable()
 export class OperatorsService {
@@ -194,7 +195,14 @@ export class OperatorsService {
         throw new NotFoundException('Operator not found');
       }
 
-      return { success: true, data: { ...operator, type: 'operator' } };
+      return {
+        success: true,
+        data: {
+          ...operator,
+          cityIds: await getUserCityIds(this.prisma, 'operator', operator.id),
+          type: 'operator',
+        },
+      };
     }
 
     throw new BadRequestException('Type must be "admin" or "operator"');
@@ -237,7 +245,6 @@ export class OperatorsService {
             login: dto.login,
             password: hashedPassword,
             status: dto.statusWork || 'active',
-            cityIds: [],
             note: dto.note,
             sipAddress: dto.sipAddress,
             passport: dto.passport,
@@ -252,7 +259,13 @@ export class OperatorsService {
           },
         });
 
-        return { success: true, message: 'Operator created successfully', data: operator };
+        await syncUserCityIds(this.prisma, 'operator', operator.id, dto.cityIds);
+
+        return {
+          success: true,
+          message: 'Operator created successfully',
+          data: { ...operator, cityIds: dto.cityIds ?? [] },
+        };
       } catch (error: any) {
         if (error.code === 'P2002' && error.meta?.target?.includes('id')) {
           await this.prisma.$executeRawUnsafe(
@@ -266,7 +279,6 @@ export class OperatorsService {
               login: dto.login,
               password: hashedPassword,
               status: dto.statusWork || 'active',
-              cityIds: [],
               note: dto.note,
               sipAddress: dto.sipAddress,
               passport: dto.passport,
@@ -281,7 +293,13 @@ export class OperatorsService {
             },
           });
 
-          return { success: true, message: 'Operator created successfully', data: operator };
+          await syncUserCityIds(this.prisma, 'operator', operator.id, dto.cityIds);
+
+          return {
+            success: true,
+            message: 'Operator created successfully',
+            data: { ...operator, cityIds: dto.cityIds ?? [] },
+          };
         }
 
         throw error;
@@ -363,7 +381,16 @@ export class OperatorsService {
         },
       });
 
-      return { success: true, message: 'Operator updated successfully', data: operator };
+      await syncUserCityIds(this.prisma, 'operator', id, dto.cityIds);
+
+      return {
+        success: true,
+        message: 'Operator updated successfully',
+        data: {
+          ...operator,
+          cityIds: dto.cityIds ?? await getUserCityIds(this.prisma, 'operator', id),
+        },
+      };
     }
 
     throw new BadRequestException('Type must be "admin" or "operator"');

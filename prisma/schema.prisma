@@ -12,7 +12,6 @@ datasource db {
 model Master {
   id        Int       @id @default(autoincrement())
   role      String    @db.VarChar(50)
-  cityIds   Int[]     @default([]) @map("city_ids")
   name      String
   login     String?   @unique
   password  String?
@@ -37,7 +36,6 @@ model Master {
 model Director {
   id            Int       @id @default(autoincrement())
   role          String    @db.VarChar(50)
-  cityIds       Int[]     @default([]) @map("city_ids")
   name          String
   login         String    @unique
   password      String
@@ -85,7 +83,6 @@ model CallcentreOperator {
   login      String    @unique
   password   String
   status     String
-  cityIds    Int[]     @default([]) @map("city_ids")
   passport   String?
   contract   String?
   note       String?
@@ -100,6 +97,20 @@ model CallcentreOperator {
   @@index([name])
   @@schema("auth_service")
   @@map("operators")
+}
+
+model UserCity {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  userType  String   @map("user_type") @db.VarChar(20)
+  cityId    Int      @map("city_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, userType, cityId])
+  @@index([userId, userType])
+  @@index([cityId])
+  @@schema("auth_service")
+  @@map("user_cities")
 }
 
 model Order {

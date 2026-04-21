@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { USER_EXISTS_CACHE_TTL, USER_EXISTS_CACHE_MAX_SIZE } from '../config/security.config';
+import { getUserCityIds } from '../common/user-cities';
 
 interface JwtPayload {
   sub: number;
@@ -59,11 +60,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User not found');
     }
 
+    let cityIds = payload.cityIds;
+    if (payload.role === 'master') {
+      cityIds = await getUserCityIds(this.prisma, 'master', payload.sub);
+    } else if (payload.role === 'director') {
+      cityIds = await getUserCityIds(this.prisma, 'director', payload.sub);
+    } else if (payload.role === 'operator' || payload.role === 'callcentre_operator') {
+      cityIds = await getUserCityIds(this.prisma, 'operator', payload.sub);
+    }
+
     return {
       userId: payload.sub,
       login: payload.login,
       role: payload.role,
-      cityIds: payload.cityIds,
+      cityIds,
     };
   }
 

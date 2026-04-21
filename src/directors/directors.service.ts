@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateDirectorDto, UpdateDirectorDto } from './dto/director.dto';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '../config/security.config';
+import { attachCityIds, getUserCityIds, getUserCityIdsMap, getUserIdsByCityIds, syncUserCityIds } from '../common/user-cities';
 
 @Injectable()
 export class DirectorsService {
@@ -32,7 +33,6 @@ export class DirectorsService {
           id: true,
           name: true,
           login: true,
-          cityIds: true,
           createdAt: true,
           status: true,
           tgId: true,
@@ -44,7 +44,16 @@ export class DirectorsService {
       this.prisma.director.count({ where }),
     ]);
 
-    return { success: true, data: directors, total, page, limit, totalPages: Math.ceil(total / limit) };
+    const cityIdsMap = await getUserCityIdsMap(this.prisma, 'director', directors.map((director) => director.id));
+
+    return {
+      success: true,
+      data: attachCityIds(directors, cityIdsMap),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getDirector(id: number) {
@@ -54,7 +63,6 @@ export class DirectorsService {
         id: true,
         name: true,
         login: true,
-        cityIds: true,
         createdAt: true,
         status: true,
         tgId: true,
@@ -65,26 +73,31 @@ export class DirectorsService {
     });
 
     if (!director) throw new NotFoundException('Director not found');
-    return { success: true, data: director };
+
+    const cityIds = await getUserCityIds(this.prisma, 'director', director.id);
+    return { success: true, data: { ...director, cityIds } };
   }
 
   async getDirectorsByCity(city: string) {
     const cityId = Number(city);
+    const directorIds = await getUserIdsByCityIds(this.prisma, 'director', [cityId]);
+    if (directorIds.length === 0) {
+      return { success: true, data: [] };
+    }
+
     const directors = await this.prisma.director.findMany({
       where: {
         deletedAt: null,
-        cityIds: {
-          has: cityId,
-        },
+        id: { in: directorIds },
       },
       select: {
         id: true,
         name: true,
-        cityIds: true,
       },
     });
 
-    return { success: true, data: directors };
+    const cityIdsMap = await getUserCityIdsMap(this.prisma, 'director', directors.map((director) => director.id));
+    return { success: true, data: attachCityIds(directors, cityIdsMap) };
   }
 
   async createDirector(dto: CreateDirectorDto) {
@@ -109,7 +122,6 @@ export class DirectorsService {
         login: dto.login,
         password: hashedPassword,
         status: 'active',
-        cityIds: dto.cityIds || [],
         tgId: dto.tgId,
         passport: dto.passport,
         contract: dto.contract,
@@ -119,7 +131,6 @@ export class DirectorsService {
         id: true,
         name: true,
         login: true,
-        cityIds: true,
         tgId: true,
         passport: true,
         contract: true,
@@ -127,14 +138,22 @@ export class DirectorsService {
       },
     });
 
-    return { success: true, message: 'Director created successfully', data: director };
+    await syncUserCityIds(this.prisma, 'director', director.id, dto.cityIds);
+
+    return {
+      success: true,
+      message: 'Director created successfully',
+      data: {
+        ...director,
+        cityIds: dto.cityIds ?? [],
+      },
+    };
   }
 
   async updateDirector(id: number, dto: UpdateDirectorDto) {
     const updateData: any = {
       ...(dto.name && { name: dto.name }),
       ...(dto.login && { login: dto.login }),
-      ...(dto.cityIds && { cityIds: dto.cityIds }),
       ...(dto.tgId !== undefined && { tgId: dto.tgId }),
       ...(dto.passport !== undefined && { passport: dto.passport }),
       ...(dto.contract !== undefined && { contract: dto.contract }),
@@ -150,7 +169,6 @@ export class DirectorsService {
         id: true,
         name: true,
         login: true,
-        cityIds: true,
         tgId: true,
         passport: true,
         contract: true,
@@ -159,7 +177,16 @@ export class DirectorsService {
       },
     });
 
-    return { success: true, message: 'Director updated successfully', data: director };
+    await syncUserCityIds(this.prisma, 'director', id, dto.cityIds);
+
+    return {
+      success: true,
+      message: 'Director updated successfully',
+      data: {
+        ...director,
+        cityIds: dto.cityIds ?? await getUserCityIds(this.prisma, 'director', id),
+      },
+    };
   }
 
   async deleteDirector(id: number) {

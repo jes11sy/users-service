@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { getUserCityIds } from '../common/user-cities';
 
 @Injectable()
 export class UsersService {
@@ -20,7 +21,6 @@ export class UsersService {
           id: true,
           name: true,
           login: true,
-          cityIds: true,
           status: true,
           createdAt: true,
           note: true,
@@ -34,7 +34,6 @@ export class UsersService {
           id: true,
           name: true,
           login: true,
-          cityIds: true,
           createdAt: true,
           status: true,
           note: true,
@@ -49,7 +48,6 @@ export class UsersService {
           name: true,
           login: true,
           status: true,
-          cityIds: true,
           createdAt: true,
           note: true,
           sipAddress: true,
@@ -73,6 +71,22 @@ export class UsersService {
       return { success: false, message: 'User not found' };
     }
 
-    return { success: true, data: { ...profile, role } };
+    let cityIds: number[] | undefined;
+    if (role === 'master') {
+      cityIds = await getUserCityIds(this.prisma, 'master', profile.id);
+    } else if (role === 'director') {
+      cityIds = await getUserCityIds(this.prisma, 'director', profile.id);
+    } else if (role === 'operator' || role === 'callcentre_operator') {
+      cityIds = await getUserCityIds(this.prisma, 'operator', profile.id);
+    }
+
+    return {
+      success: true,
+      data: {
+        ...profile,
+        ...(cityIds !== undefined ? { cityIds } : {}),
+        role,
+      },
+    };
   }
 }
