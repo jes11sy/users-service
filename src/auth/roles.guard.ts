@@ -6,6 +6,8 @@ export enum UserRole {
   ADMIN = 'admin',
   MASTER = 'master',
   DIRECTOR = 'director',
+  CALLCENTRE_ADMIN = 'callcentre_admin',
+  CALLCENTRE_OPERATOR = 'callcentre_operator',
   OPERATOR = 'operator',
 }
 

@@ -17,10 +17,6 @@ export class UsersService {
       profile = await this.prisma.master.findUnique({
         where: { login },
         select: {
-<<<<<<< Updated upstream
-          id: true, name: true, login: true, cityIds: true,
-          status: true, note: true, chatId: true, createdAt: true,
-=======
           id: true,
           name: true,
           login: true,
@@ -29,31 +25,12 @@ export class UsersService {
           createdAt: true,
           note: true,
           chatId: true,
->>>>>>> Stashed changes
         },
       });
     } else if (role === 'director') {
       profile = await this.prisma.director.findUnique({
         where: { login },
         select: {
-<<<<<<< Updated upstream
-          id: true, name: true, login: true, cityIds: true,
-          note: true, tgId: true, createdAt: true,
-        },
-      });
-    } else if (role === 'operator') {
-      profile = await this.prisma.operator.findUnique({
-        where: { login },
-        select: {
-          id: true, name: true, login: true, cityIds: true,
-          status: true, note: true, sipAddress: true, createdAt: true,
-        },
-      });
-    } else if (role === 'admin') {
-      profile = await this.prisma.admin.findUnique({
-        where: { login },
-        select: { id: true, login: true, note: true, createdAt: true },
-=======
           id: true,
           name: true,
           login: true,
@@ -89,7 +66,6 @@ export class UsersService {
           note: true,
           createdAt: true,
         },
->>>>>>> Stashed changes
       });
     }
 

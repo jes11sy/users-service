@@ -35,7 +35,7 @@ export class DirectorsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get directors by cityId (internal use for notifications)' })
   async getDirectorsByCityId(@Param('cityId', ParseIntPipe) cityId: number) {
-    return this.directorsService.getDirectorsByCityId(cityId);
+    return this.directorsService.getDirectorsByCity(String(cityId));
   }
 
   @Get(':id')

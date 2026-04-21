@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-import { IsString, IsOptional, IsArray, IsNumber } from 'class-validator';
-=======
 import { IsString, IsOptional, IsArray, IsInt } from 'class-validator';
->>>>>>> Stashed changes
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -21,14 +17,9 @@ export class CreateDirectorDto {
 
   @ApiProperty({ required: false, type: [Number] })
   @IsArray()
-<<<<<<< Updated upstream
-  @IsNumber({}, { each: true })
-  @IsOptional()
-=======
   @IsOptional()
   @Type(() => Number)
   @IsInt({ each: true })
->>>>>>> Stashed changes
   cityIds?: number[];
 
   @ApiProperty({ required: false })
@@ -70,14 +61,9 @@ export class UpdateDirectorDto {
 
   @ApiProperty({ required: false, type: [Number] })
   @IsArray()
-<<<<<<< Updated upstream
-  @IsNumber({}, { each: true })
-  @IsOptional()
-=======
   @IsOptional()
   @Type(() => Number)
   @IsInt({ each: true })
->>>>>>> Stashed changes
   cityIds?: number[];
 
   @ApiProperty({ required: false })

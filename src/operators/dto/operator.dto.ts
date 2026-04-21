@@ -27,6 +27,11 @@ export class CreateOperatorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  statusWork?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
   note?: string;
 
   @ApiProperty({ required: false })
@@ -75,7 +80,7 @@ export class UpdateOperatorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  status?: string;
+  statusWork?: string;
 
   @ApiProperty({ required: false })
   @IsString()

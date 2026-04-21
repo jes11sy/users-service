@@ -25,7 +25,7 @@ export class OperatorsController {
   @Get()
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN, UserRole.ADMIN, UserRole.DIRECTOR)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Get all operators and admins' })
   async getOperators(@Query() query: GetOperatorsQueryDto) {
     return this.operatorsService.getOperators(query);
@@ -34,7 +34,7 @@ export class OperatorsController {
   @Get(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN, UserRole.ADMIN, UserRole.DIRECTOR)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN, UserRole.DIRECTOR)
   @ApiOperation({ summary: 'Get operator/admin by ID' })
   async getOperator(@Param('id', ParseIntPipe) id: number, @Query('type') type: string) {
     return this.operatorsService.getOperator(id, type);
@@ -43,7 +43,7 @@ export class OperatorsController {
   @Post()
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Create new operator/admin' })
   async createOperator(@Body() dto: CreateOperatorDto) {
     return this.operatorsService.createOperator(dto);
@@ -52,7 +52,7 @@ export class OperatorsController {
   @Put(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Update operator/admin' })
   async updateOperator(
     @Param('id', ParseIntPipe) id: number,
@@ -65,20 +65,16 @@ export class OperatorsController {
   @Patch('work-status')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-<<<<<<< Updated upstream
-  @Roles(UserRole.OPERATOR)
-=======
   @Roles(UserRole.OPERATOR, UserRole.CALLCENTRE_OPERATOR)
->>>>>>> Stashed changes
   @ApiOperation({ summary: 'Update operator work status (self)' })
-  async updateWorkStatus(@Request() req, @Body() body: { status: string }) {
-    return this.operatorsService.updateWorkStatus(req.user.userId, body.status);
+  async updateWorkStatus(@Request() req, @Body() body: { statusWork: string }) {
+    return this.operatorsService.updateWorkStatus(req.user.userId, body.statusWork);
   }
 
   @Delete(':id')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.CALLCENTRE_ADMIN)
   @ApiOperation({ summary: 'Delete operator/admin' })
   async deleteOperator(
     @Param('id', ParseIntPipe) id: number,

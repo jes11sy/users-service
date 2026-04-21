@@ -2,7 +2,6 @@ import { IsOptional, IsString, MaxLength, IsEnum, IsInt, Min, Max } from 'class-
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
-// ✅ Базовый DTO для пагинации
 export class PaginationDto {
   @ApiProperty({ required: false, description: 'Номер страницы (начиная с 1)', default: 1, minimum: 1 })
   @IsOptional()
@@ -23,19 +22,11 @@ export class PaginationDto {
 export class GetMastersQueryDto extends PaginationDto {
   @ApiProperty({ required: false, description: 'Фильтр по ID города' })
   @IsOptional()
-<<<<<<< Updated upstream
-  @IsInt()
-  @Type(() => Number)
-  cityId?: number;
-
-  @ApiProperty({ required: false, description: 'Фильтр по статусу (active/inactive)' })
-=======
   @Type(() => Number)
   @IsInt()
   cityId?: number;
 
   @ApiProperty({ required: false, description: 'Фильтр по статусу' })
->>>>>>> Stashed changes
   @IsOptional()
   @IsString()
   @MaxLength(50)
