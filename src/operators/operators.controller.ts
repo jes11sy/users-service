@@ -65,7 +65,11 @@ export class OperatorsController {
   @Patch('work-status')
   @UseGuards(CookieJwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
+<<<<<<< Updated upstream
   @Roles(UserRole.OPERATOR)
+=======
+  @Roles(UserRole.OPERATOR, UserRole.CALLCENTRE_OPERATOR)
+>>>>>>> Stashed changes
   @ApiOperation({ summary: 'Update operator work status (self)' })
   async updateWorkStatus(@Request() req, @Body() body: { status: string }) {
     return this.operatorsService.updateWorkStatus(req.user.userId, body.status);

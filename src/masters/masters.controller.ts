@@ -75,6 +75,10 @@ export class MastersController {
     // ✅ FIX IDOR: Директор может редактировать только мастеров из своих городов
     if (req.user.role === 'director') {
       await this.mastersService.validateDirectorAccessToMaster(id, req.user.cityIds);
+<<<<<<< Updated upstream
+=======
+      // Также проверяем, что новые города (если указаны) в пределах городов директора
+>>>>>>> Stashed changes
       if (dto.cityIds) {
         this.mastersService.validateDirectorCitiesForMaster(dto.cityIds, req.user.cityIds);
       }

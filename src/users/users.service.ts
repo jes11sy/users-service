@@ -17,14 +17,26 @@ export class UsersService {
       profile = await this.prisma.master.findUnique({
         where: { login },
         select: {
+<<<<<<< Updated upstream
           id: true, name: true, login: true, cityIds: true,
           status: true, note: true, chatId: true, createdAt: true,
+=======
+          id: true,
+          name: true,
+          login: true,
+          cityIds: true,
+          status: true,
+          createdAt: true,
+          note: true,
+          chatId: true,
+>>>>>>> Stashed changes
         },
       });
     } else if (role === 'director') {
       profile = await this.prisma.director.findUnique({
         where: { login },
         select: {
+<<<<<<< Updated upstream
           id: true, name: true, login: true, cityIds: true,
           note: true, tgId: true, createdAt: true,
         },
@@ -41,6 +53,43 @@ export class UsersService {
       profile = await this.prisma.admin.findUnique({
         where: { login },
         select: { id: true, login: true, note: true, createdAt: true },
+=======
+          id: true,
+          name: true,
+          login: true,
+          cityIds: true,
+          createdAt: true,
+          status: true,
+          note: true,
+          tgId: true,
+        },
+      });
+    } else if (role === 'operator' || role === 'callcentre_operator') {
+      profile = await this.prisma.callcentreOperator.findUnique({
+        where: { login },
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+          cityIds: true,
+          createdAt: true,
+          note: true,
+          sipAddress: true,
+        },
+      });
+    } else if (role === 'admin' || role === 'callcentre_admin') {
+      profile = await this.prisma.callcentreAdmin.findUnique({
+        where: { login },
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+          note: true,
+          createdAt: true,
+        },
+>>>>>>> Stashed changes
       });
     }
 

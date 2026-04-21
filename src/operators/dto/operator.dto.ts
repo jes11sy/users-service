@@ -75,6 +75,11 @@ export class UpdateOperatorDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  status?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
   note?: string;
 
   @ApiProperty({ required: false })

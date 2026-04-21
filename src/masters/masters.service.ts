@@ -18,18 +18,43 @@ export class MastersService {
     }
   }
 
+  private getUserCityIds(user?: any): number[] {
+    return Array.isArray(user?.cityIds) ? user.cityIds : [];
+  }
+
   async getMasters(query: any, user?: any) {
     const { cityId, status, search, page = 1, limit = 50 } = query;
+<<<<<<< Updated upstream
+=======
+
+    // Валидация поискового запроса
+>>>>>>> Stashed changes
     this.validateSearchQuery(search);
 
-    const where: any = {};
+    const where: any = {
+      deletedAt: null,
+    };
 
+<<<<<<< Updated upstream
     if (user?.role === 'director' && user?.cityIds && user.cityIds.length > 0) {
       where.cityIds = { hasSome: user.cityIds };
       if (cityId && user.cityIds.includes(Number(cityId))) {
         where.cityIds = { has: Number(cityId) };
       }
     } else if (cityId) {
+=======
+    // Фильтрация по городам директора
+    const userCityIds = this.getUserCityIds(user);
+    if (user?.role === 'director' && userCityIds.length > 0) {
+      where.cityIds = { hasSome: userCityIds };
+      
+      // Если директор дополнительно фильтрует по конкретному городу из своего списка
+      if (cityId && userCityIds.includes(Number(cityId))) {
+        where.cityIds = { has: Number(cityId) };
+      }
+    } else if (cityId) {
+      // Для админа можно фильтровать по любому городу
+>>>>>>> Stashed changes
       where.cityIds = { has: Number(cityId) };
     }
 
@@ -53,8 +78,21 @@ export class MastersService {
         skip,
         take: limit,
         select: {
+<<<<<<< Updated upstream
           id: true, name: true, login: true, cityIds: true,
           status: true, note: true, contract: true, passport: true, createdAt: true,
+=======
+          id: true,
+          name: true,
+          login: true,
+          cityIds: true,
+          status: true,
+          createdAt: true,
+          note: true,
+          contract: true,
+          passport: true,
+          chatId: true,
+>>>>>>> Stashed changes
         },
       }),
       this.prisma.master.count({ where }),
@@ -67,23 +105,47 @@ export class MastersService {
     const { search, role, page = 1, limit = 50 } = query;
     this.validateSearchQuery(search);
 
+<<<<<<< Updated upstream
     const mastersWhere: any = search ? {
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
         { login: { contains: search, mode: 'insensitive' } },
       ],
     } : {};
+=======
+    // Формируем условие для фильтрации по городам директора
+    const mastersWhere: any = {
+      deletedAt: null,
+      ...(search ? {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { login: { contains: search, mode: 'insensitive' } },
+        ],
+      } : {}),
+    };
+>>>>>>> Stashed changes
 
-    const directorsWhere: any = search ? {
-      OR: [
-        { name: { contains: search, mode: 'insensitive' } },
-        { login: { contains: search, mode: 'insensitive' } },
-      ],
-    } : {};
+    const directorsWhere: any = {
+      deletedAt: null,
+      ...(search ? {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { login: { contains: search, mode: 'insensitive' } },
+        ],
+      } : {}),
+    };
 
+<<<<<<< Updated upstream
     if (user?.role === 'director' && user?.cityIds && user.cityIds.length > 0) {
       mastersWhere.cityIds = { hasSome: user.cityIds };
       directorsWhere.cityIds = { hasSome: user.cityIds };
+=======
+    // Для директора показываем только сотрудников его городов
+    const userCityIds = this.getUserCityIds(user);
+    if (user?.role === 'director' && userCityIds.length > 0) {
+      mastersWhere.cityIds = { hasSome: userCityIds };
+      directorsWhere.cityIds = { hasSome: userCityIds };
+>>>>>>> Stashed changes
     }
 
     if (role === 'master') {
@@ -93,7 +155,19 @@ export class MastersService {
           where: mastersWhere,
           skip,
           take: limit,
+<<<<<<< Updated upstream
           select: { id: true, name: true, login: true, cityIds: true, status: true, note: true, createdAt: true },
+=======
+          select: {
+            id: true,
+            name: true,
+            login: true,
+            cityIds: true,
+            status: true,
+            createdAt: true,
+            note: true,
+          },
+>>>>>>> Stashed changes
           orderBy: { createdAt: 'desc' },
         }),
         this.prisma.master.count({ where: mastersWhere }),
@@ -113,7 +187,18 @@ export class MastersService {
           where: directorsWhere,
           skip,
           take: limit,
+<<<<<<< Updated upstream
           select: { id: true, name: true, login: true, cityIds: true, note: true, createdAt: true },
+=======
+          select: {
+            id: true,
+            name: true,
+            login: true,
+            cityIds: true,
+            createdAt: true,
+            note: true,
+          },
+>>>>>>> Stashed changes
           orderBy: { createdAt: 'desc' },
         }),
         this.prisma.director.count({ where: directorsWhere }),
@@ -134,14 +219,37 @@ export class MastersService {
         where: mastersWhere,
         skip,
         take: halfLimit,
+<<<<<<< Updated upstream
         select: { id: true, name: true, login: true, cityIds: true, status: true, note: true, createdAt: true },
+=======
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          cityIds: true,
+          status: true,
+          createdAt: true,
+          note: true,
+        },
+>>>>>>> Stashed changes
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.director.findMany({
         where: directorsWhere,
         skip,
         take: halfLimit,
+<<<<<<< Updated upstream
         select: { id: true, name: true, login: true, cityIds: true, note: true, createdAt: true },
+=======
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          cityIds: true,
+          createdAt: true,
+          note: true,
+        },
+>>>>>>> Stashed changes
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.master.count({ where: mastersWhere }),
@@ -160,6 +268,12 @@ export class MastersService {
     };
   }
 
+<<<<<<< Updated upstream
+=======
+  /**
+   * ✅ FIX IDOR: Проверяет, что директор имеет доступ к мастеру (мастер в городах директора)
+   */
+>>>>>>> Stashed changes
   async validateDirectorAccessToMaster(masterId: number, directorCityIds: number[]): Promise<void> {
     if (!directorCityIds || directorCityIds.length === 0) {
       throw new ForbiddenException('Director has no assigned cities');
@@ -172,19 +286,42 @@ export class MastersService {
 
     if (!master) throw new NotFoundException('Master not found');
 
+<<<<<<< Updated upstream
     const hasCommonCity = master.cityIds.some(id => directorCityIds.includes(id));
     if (!hasCommonCity) throw new ForbiddenException('You do not have access to this master');
   }
 
+=======
+    // Проверяем, что хотя бы один город мастера входит в города директора
+    const hasCommonCity = master.cityIds.some((cityId) => directorCityIds.includes(cityId));
+    if (!hasCommonCity) {
+      throw new ForbiddenException('You do not have access to this master');
+    }
+  }
+
+  /**
+   * ✅ FIX IDOR: Проверяет, что все указанные города мастера входят в города директора
+   */
+>>>>>>> Stashed changes
   validateDirectorCitiesForMaster(masterCityIds: number[] | undefined, directorCityIds: number[]): void {
     if (!directorCityIds || directorCityIds.length === 0) {
       throw new ForbiddenException('Director has no assigned cities');
     }
     if (!masterCityIds || masterCityIds.length === 0) return;
 
+<<<<<<< Updated upstream
     const invalidIds = masterCityIds.filter(id => !directorCityIds.includes(id));
     if (invalidIds.length > 0) {
       throw new ForbiddenException(`You cannot assign master to city IDs: ${invalidIds.join(', ')}`);
+=======
+    if (!masterCityIds || masterCityIds.length === 0) {
+      return; // Пустые города допустимы
+    }
+
+    const invalidCities = masterCityIds.filter((cityId) => !directorCityIds.includes(cityId));
+    if (invalidCities.length > 0) {
+      throw new ForbiddenException(`You cannot assign master to cities: ${invalidCities.join(', ')}`);
+>>>>>>> Stashed changes
     }
   }
 
@@ -192,8 +329,21 @@ export class MastersService {
     const master = await this.prisma.master.findUnique({
       where: { id },
       select: {
+<<<<<<< Updated upstream
         id: true, name: true, login: true, cityIds: true,
         status: true, chatId: true, note: true, contract: true, passport: true, createdAt: true,
+=======
+        id: true,
+        name: true,
+        login: true,
+        cityIds: true,
+        status: true,
+        createdAt: true,
+        chatId: true,
+        note: true,
+        contract: true,
+        passport: true,
+>>>>>>> Stashed changes
       },
     });
 
@@ -216,18 +366,35 @@ export class MastersService {
 
     const master = await this.prisma.master.create({
       data: {
+        role: 'master',
         name: dto.name,
         login: dto.login,
         password: dto.password ? await this.hashPassword(dto.password) : null,
+<<<<<<< Updated upstream
         role: 'master',
         cityIds: dto.cityIds || [],
         status: dto.status || 'active',
+=======
+        status: dto.status || 'active',
+        cityIds: dto.cityIds || [],
+>>>>>>> Stashed changes
         note: dto.note,
         chatId: dto.chatId,
         passport: dto.passport,
         contract: dto.contract,
       },
+<<<<<<< Updated upstream
       select: { id: true, name: true, login: true, cityIds: true, status: true, createdAt: true },
+=======
+      select: {
+        id: true,
+        name: true,
+        login: true,
+        cityIds: true,
+        status: true,
+        createdAt: true,
+      },
+>>>>>>> Stashed changes
     });
 
     return { success: true, message: 'Master created successfully', data: master };
@@ -241,6 +408,11 @@ export class MastersService {
       ...(dto.status && { status: dto.status }),
       ...(dto.note !== undefined && { note: dto.note }),
       ...(dto.chatId !== undefined && { chatId: dto.chatId }),
+<<<<<<< Updated upstream
+=======
+      ...(dto.passport !== undefined && { passport: dto.passport }),
+      ...(dto.contract !== undefined && { contract: dto.contract }),
+>>>>>>> Stashed changes
     };
 
     if (dto.password) updateData.password = await this.hashPassword(dto.password);
@@ -248,7 +420,21 @@ export class MastersService {
     const master = await this.prisma.master.update({
       where: { id },
       data: updateData,
+<<<<<<< Updated upstream
       select: { id: true, name: true, login: true, cityIds: true, status: true, note: true },
+=======
+      select: {
+        id: true,
+        name: true,
+        login: true,
+        cityIds: true,
+        status: true,
+        note: true,
+        chatId: true,
+        passport: true,
+        contract: true,
+      },
+>>>>>>> Stashed changes
     });
 
     return { success: true, message: 'Master updated successfully', data: master };
@@ -263,8 +449,19 @@ export class MastersService {
     const master = await this.prisma.master.update({
       where: { id },
       data: {
+<<<<<<< Updated upstream
         ...(body.contract !== undefined && { contract: body.contract }),
         ...(body.passport !== undefined && { passport: body.passport }),
+=======
+        ...(body.contract && { contract: body.contract }),
+        ...(body.passport && { passport: body.passport }),
+      },
+      select: {
+        id: true,
+        name: true,
+        contract: true,
+        passport: true,
+>>>>>>> Stashed changes
       },
       select: { id: true, name: true, contract: true, passport: true },
     });

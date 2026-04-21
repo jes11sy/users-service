@@ -26,8 +26,21 @@ export class EmployeesService {
       const master = await this.prisma.master.findUnique({
         where: { id },
         select: {
+<<<<<<< Updated upstream
           id: true, name: true, login: true, cityIds: true,
           status: true, note: true, chatId: true, passport: true, contract: true, createdAt: true,
+=======
+          id: true,
+          name: true,
+          login: true,
+          cityIds: true,
+          status: true,
+          createdAt: true,
+          note: true,
+          chatId: true,
+          passport: true,
+          contract: true,
+>>>>>>> Stashed changes
         },
       });
 
@@ -38,8 +51,21 @@ export class EmployeesService {
       const director = await this.prisma.director.findUnique({
         where: { id },
         select: {
+<<<<<<< Updated upstream
           id: true, name: true, login: true, cityIds: true,
           note: true, tgId: true, passport: true, contract: true, createdAt: true,
+=======
+          id: true,
+          name: true,
+          login: true,
+          cityIds: true,
+          createdAt: true,
+          status: true,
+          note: true,
+          tgId: true,
+          passport: true,
+          contract: true,
+>>>>>>> Stashed changes
         },
       });
 
@@ -64,10 +90,14 @@ export class EmployeesService {
 
     const master = await this.prisma.master.create({
       data: {
+        role: 'master',
         name: dto.name,
         login: dto.login,
         password: dto.password ? await this.hashPassword(dto.password) : null,
+<<<<<<< Updated upstream
         role: 'master',
+=======
+>>>>>>> Stashed changes
         cityIds: dto.cityIds || [],
         status: dto.status || 'active',
         note: dto.note,
@@ -76,8 +106,21 @@ export class EmployeesService {
         contract: dto.contract,
       },
       select: {
+<<<<<<< Updated upstream
         id: true, name: true, login: true, cityIds: true,
         status: true, note: true, chatId: true, passport: true, contract: true, createdAt: true,
+=======
+        id: true,
+        name: true,
+        login: true,
+        cityIds: true,
+        status: true,
+        createdAt: true,
+        note: true,
+        chatId: true,
+        passport: true,
+        contract: true,
+>>>>>>> Stashed changes
       },
     });
 
@@ -105,8 +148,20 @@ export class EmployeesService {
       where: { id },
       data: updateData,
       select: {
+<<<<<<< Updated upstream
         id: true, name: true, login: true, cityIds: true,
         status: true, note: true, chatId: true, passport: true, contract: true,
+=======
+        id: true,
+        name: true,
+        login: true,
+        cityIds: true,
+        status: true,
+        note: true,
+        chatId: true,
+        passport: true,
+        contract: true,
+>>>>>>> Stashed changes
       },
     });
 

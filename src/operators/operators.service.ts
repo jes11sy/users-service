@@ -28,6 +28,7 @@ export class OperatorsService {
 
     if (type === 'admin') {
       const [admins, total] = await Promise.all([
+<<<<<<< Updated upstream
         this.prisma.admin.findMany({
           orderBy: { createdAt: 'desc' },
           skip,
@@ -35,6 +36,23 @@ export class OperatorsService {
           select: { id: true, login: true, note: true },
         }),
         this.prisma.admin.count(),
+=======
+        this.prisma.callcentreAdmin.findMany({
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            name: true,
+            login: true,
+            status: true,
+            note: true,
+            createdAt: true,
+          },
+        }),
+        this.prisma.callcentreAdmin.count({ where: { deletedAt: null } }),
+>>>>>>> Stashed changes
       ]);
 
       return { success: true, data: admins, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -42,16 +60,34 @@ export class OperatorsService {
 
     if (type === 'operator') {
       const [operators, total] = await Promise.all([
+<<<<<<< Updated upstream
         this.prisma.operator.findMany({
+=======
+        this.prisma.callcentreOperator.findMany({
+          where: { deletedAt: null },
+>>>>>>> Stashed changes
           orderBy: { createdAt: 'desc' },
           skip,
           take: limit,
           select: {
+<<<<<<< Updated upstream
             id: true, name: true, login: true, status: true,
             cityIds: true, sipAddress: true, note: true, createdAt: true,
           },
         }),
         this.prisma.operator.count(),
+=======
+            id: true,
+            name: true,
+            login: true,
+            status: true,
+            createdAt: true,
+            sipAddress: true,
+            note: true,
+          },
+        }),
+        this.prisma.callcentreOperator.count({ where: { deletedAt: null } }),
+>>>>>>> Stashed changes
       ]);
 
       return { success: true, data: operators, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -61,6 +97,7 @@ export class OperatorsService {
     const halfSkip = (page - 1) * halfLimit;
 
     const [admins, operators, adminsCount, operatorsCount] = await Promise.all([
+<<<<<<< Updated upstream
       this.prisma.admin.findMany({
         orderBy: { createdAt: 'desc' },
         skip: halfSkip,
@@ -75,6 +112,39 @@ export class OperatorsService {
       }),
       this.prisma.admin.count(),
       this.prisma.operator.count(),
+=======
+      this.prisma.callcentreAdmin.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        skip: halfSkip,
+        take: halfLimit,
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+          note: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.callcentreOperator.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        skip: halfSkip,
+        take: halfLimit,
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+          createdAt: true,
+          note: true,
+          sipAddress: true,
+        },
+      }),
+      this.prisma.callcentreAdmin.count({ where: { deletedAt: null } }),
+      this.prisma.callcentreOperator.count({ where: { deletedAt: null } }),
+>>>>>>> Stashed changes
     ]);
 
     return {
@@ -103,7 +173,18 @@ export class OperatorsService {
     if (resolvedType === 'admin') {
       const admin = await this.prisma.admin.findUnique({
         where: { id },
+<<<<<<< Updated upstream
         select: { id: true, login: true, note: true },
+=======
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+          note: true,
+          createdAt: true,
+        },
+>>>>>>> Stashed changes
       });
       if (!admin) throw new NotFoundException('Admin not found');
       return { success: true, data: { ...admin, type: 'admin' } };
@@ -113,8 +194,20 @@ export class OperatorsService {
       const operator = await this.prisma.operator.findUnique({
         where: { id },
         select: {
+<<<<<<< Updated upstream
           id: true, name: true, login: true, status: true,
           cityIds: true, sipAddress: true, note: true, passport: true, contract: true, createdAt: true,
+=======
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+          createdAt: true,
+          sipAddress: true,
+          note: true,
+          passport: true,
+          contract: true,
+>>>>>>> Stashed changes
         },
       });
       if (!operator) throw new NotFoundException('Operator not found');
@@ -129,15 +222,35 @@ export class OperatorsService {
 
     if (dto.type === 'admin') {
       const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
+<<<<<<< Updated upstream
       const admin = await this.prisma.admin.create({
         data: { login: dto.login, password: hashedPassword, note: dto.note, role: 'admin', name: dto.name, status: dto.status ?? 'active' },
         select: { id: true, login: true },
+=======
+      
+      const admin = await this.prisma.callcentreAdmin.create({
+        data: {
+          role: 'admin',
+          name: dto.name,
+          login: dto.login,
+          password: hashedPassword,
+          status: 'active',
+          note: dto.note,
+        },
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+        },
+>>>>>>> Stashed changes
       });
       return { success: true, message: 'Admin created successfully', data: admin };
     }
 
     if (dto.type === 'operator') {
       const hashedPassword = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
+<<<<<<< Updated upstream
       const operator = await this.prisma.operator.create({
         data: {
           name: dto.name,
@@ -154,6 +267,76 @@ export class OperatorsService {
         select: { id: true, name: true, login: true, status: true, createdAt: true },
       });
       return { success: true, message: 'Operator created successfully', data: operator };
+=======
+      
+      try {
+        const operator = await this.prisma.callcentreOperator.create({
+          data: {
+            role: 'operator',
+            name: dto.name,
+            login: dto.login,
+            password: hashedPassword,
+            status: dto.statusWork || 'active',
+            cityIds: [],
+            note: dto.note,
+            sipAddress: dto.sipAddress,
+            passport: dto.passport,
+            contract: dto.contract,
+          },
+          select: {
+            id: true,
+            name: true,
+            login: true,
+            status: true,
+            createdAt: true,
+          },
+        });
+
+        return {
+          success: true,
+          message: 'Operator created successfully',
+          data: operator,
+        };
+      } catch (error: any) {
+        // Если ошибка связана с уникальным ограничением на ID (сбилась последовательность)
+        if (error.code === 'P2002' && error.meta?.target?.includes('id')) {
+          // Исправляем последовательность
+          await this.prisma.$executeRawUnsafe(
+            `SELECT setval(pg_get_serial_sequence('"auth_service"."operators"', 'id'), COALESCE((SELECT MAX(id) FROM "auth_service"."operators"), 1), true);`
+          );
+          
+          // Повторяем попытку создания
+          const operator = await this.prisma.callcentreOperator.create({
+            data: {
+              role: 'operator',
+              name: dto.name,
+              login: dto.login,
+              password: hashedPassword,
+              status: dto.statusWork || 'active',
+              cityIds: [],
+              note: dto.note,
+              sipAddress: dto.sipAddress,
+              passport: dto.passport,
+              contract: dto.contract,
+            },
+            select: {
+              id: true,
+              name: true,
+              login: true,
+              status: true,
+              createdAt: true,
+            },
+          });
+
+          return {
+            success: true,
+            message: 'Operator created successfully',
+            data: operator,
+          };
+        }
+        throw error;
+      }
+>>>>>>> Stashed changes
     }
 
     throw new BadRequestException('Type must be "admin" or "operator"');
@@ -175,6 +358,8 @@ export class OperatorsService {
     if (resolvedType === 'admin') {
       const updateData: any = {
         ...(dto.login && { login: dto.login }),
+        ...(dto.name && { name: dto.name }),
+        ...(dto.status && { status: dto.status }),
         ...(dto.note !== undefined && { note: dto.note }),
       };
       if (dto.password) updateData.password = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
@@ -182,7 +367,17 @@ export class OperatorsService {
       const admin = await this.prisma.admin.update({
         where: { id },
         data: updateData,
+<<<<<<< Updated upstream
         select: { id: true, login: true, note: true },
+=======
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+          note: true,
+        },
+>>>>>>> Stashed changes
       });
       return { success: true, message: 'Admin updated successfully', data: admin };
     }
@@ -191,8 +386,13 @@ export class OperatorsService {
       const updateData: any = {
         ...(dto.name && { name: dto.name }),
         ...(dto.login && { login: dto.login }),
+<<<<<<< Updated upstream
         ...(dto.status && { status: dto.status }),
         ...(dto.cityIds && { cityIds: dto.cityIds }),
+=======
+        ...((dto as any).status && { status: (dto as any).status }),
+        ...(dto.statusWork && { status: dto.statusWork }),
+>>>>>>> Stashed changes
         ...(dto.note !== undefined && { note: dto.note }),
         ...(dto.sipAddress !== undefined && { sipAddress: dto.sipAddress }),
         ...(dto.passport !== undefined && { passport: dto.passport }),
@@ -203,7 +403,20 @@ export class OperatorsService {
       const operator = await this.prisma.operator.update({
         where: { id },
         data: updateData,
+<<<<<<< Updated upstream
         select: { id: true, name: true, login: true, status: true, note: true },
+=======
+        select: {
+          id: true,
+          name: true,
+          login: true,
+          status: true,
+          note: true,
+          sipAddress: true,
+          passport: true,
+          contract: true,
+        },
+>>>>>>> Stashed changes
       });
       return { success: true, message: 'Operator updated successfully', data: operator };
     }
@@ -221,7 +434,29 @@ export class OperatorsService {
       select: { id: true, name: true, status: true },
     });
 
+<<<<<<< Updated upstream
     return { success: true, message: 'Status updated successfully', data: updated };
+=======
+    if (!operator) {
+      throw new NotFoundException('Operator not found');
+    }
+
+    const updated = await this.prisma.callcentreOperator.update({
+      where: { id: userId },
+      data: { status: statusWork },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Work status updated successfully',
+      data: updated,
+    };
+>>>>>>> Stashed changes
   }
 
   async deleteOperator(id: number, type?: string) {

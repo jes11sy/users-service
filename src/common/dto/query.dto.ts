@@ -23,11 +23,19 @@ export class PaginationDto {
 export class GetMastersQueryDto extends PaginationDto {
   @ApiProperty({ required: false, description: 'Фильтр по ID города' })
   @IsOptional()
+<<<<<<< Updated upstream
   @IsInt()
   @Type(() => Number)
   cityId?: number;
 
   @ApiProperty({ required: false, description: 'Фильтр по статусу (active/inactive)' })
+=======
+  @Type(() => Number)
+  @IsInt()
+  cityId?: number;
+
+  @ApiProperty({ required: false, description: 'Фильтр по статусу' })
+>>>>>>> Stashed changes
   @IsOptional()
   @IsString()
   @MaxLength(50)

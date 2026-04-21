@@ -1,5 +1,10 @@
+<<<<<<< Updated upstream
 import { IsString, IsOptional, IsArray, IsNumber } from 'class-validator';
+=======
+import { IsString, IsOptional, IsArray, IsInt } from 'class-validator';
+>>>>>>> Stashed changes
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateMasterDto {
   @ApiProperty()
@@ -20,6 +25,11 @@ export class CreateMasterDto {
   @IsArray()
   @IsNumber({}, { each: true })
   @IsOptional()
+<<<<<<< Updated upstream
+=======
+  @Type(() => Number)
+  @IsInt({ each: true })
+>>>>>>> Stashed changes
   cityIds?: number[];
 
   @ApiProperty({ required: false })
@@ -68,6 +78,11 @@ export class UpdateMasterDto {
   @IsArray()
   @IsNumber({}, { each: true })
   @IsOptional()
+<<<<<<< Updated upstream
+=======
+  @Type(() => Number)
+  @IsInt({ each: true })
+>>>>>>> Stashed changes
   cityIds?: number[];
 
   @ApiProperty({ required: false })

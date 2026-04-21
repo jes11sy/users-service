@@ -7,7 +7,11 @@ import { USER_EXISTS_CACHE_TTL, USER_EXISTS_CACHE_MAX_SIZE } from '../config/sec
 interface JwtPayload {
   sub: number;
   login: string;
+<<<<<<< Updated upstream
   role: 'master' | 'director' | 'admin' | 'operator';
+=======
+  role: 'master' | 'director' | 'admin' | 'operator' | 'callcentre_admin' | 'callcentre_operator';
+>>>>>>> Stashed changes
   cityIds?: number[];
   iat?: number;
   exp?: number;
@@ -53,7 +57,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Проверка валидности роли
+<<<<<<< Updated upstream
     const validRoles = ['master', 'director', 'admin', 'operator'];
+=======
+    const validRoles = ['master', 'director', 'admin', 'operator', 'callcentre_admin', 'callcentre_operator'];
+>>>>>>> Stashed changes
     if (!validRoles.includes(payload.role)) {
       this.logger.warn(`Invalid role in JWT: ${payload.role}`);
       throw new UnauthorizedException('Invalid role in token');
@@ -149,7 +157,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           return !!admin;
 
         case 'operator':
+<<<<<<< Updated upstream
           const operator = await this.prisma.operator.findUnique({
+=======
+        case 'callcentre_operator':
+          const operator = await this.prisma.callcentreOperator.findUnique({
+>>>>>>> Stashed changes
             where: { id: userId },
             select: { id: true },
           });

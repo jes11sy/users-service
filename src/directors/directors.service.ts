@@ -10,8 +10,16 @@ export class DirectorsService {
 
   async getDirectors(query: any = {}) {
     const { search, page = 1, limit = 50 } = query;
+<<<<<<< Updated upstream
 
     const where: any = {};
+=======
+    
+    const where: any = {
+      deletedAt: null,
+    };
+    
+>>>>>>> Stashed changes
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -28,8 +36,21 @@ export class DirectorsService {
         skip,
         take: limit,
         select: {
+<<<<<<< Updated upstream
           id: true, name: true, login: true, cityIds: true,
           tgId: true, note: true, contract: true, passport: true, createdAt: true,
+=======
+          id: true,
+          name: true,
+          login: true,
+          cityIds: true,
+          createdAt: true,
+          status: true,
+          tgId: true,
+          note: true,
+          contract: true,
+          passport: true,
+>>>>>>> Stashed changes
         },
       }),
       this.prisma.director.count({ where }),
@@ -42,8 +63,21 @@ export class DirectorsService {
     const director = await this.prisma.director.findUnique({
       where: { id },
       select: {
+<<<<<<< Updated upstream
         id: true, name: true, login: true, cityIds: true,
         tgId: true, note: true, contract: true, passport: true, createdAt: true,
+=======
+        id: true,
+        name: true,
+        login: true,
+        cityIds: true,
+        createdAt: true,
+        status: true,
+        tgId: true,
+        note: true,
+        contract: true,
+        passport: true,
+>>>>>>> Stashed changes
       },
     });
 
@@ -51,10 +85,31 @@ export class DirectorsService {
     return { success: true, data: director };
   }
 
+<<<<<<< Updated upstream
   async getDirectorsByCityId(cityId: number) {
     const directors = await this.prisma.director.findMany({
       where: { cityIds: { has: cityId } },
       select: { id: true, name: true, cityIds: true, tgId: true },
+=======
+  /**
+   * Получить всех директоров, которые обслуживают указанный город
+   * Используется для отправки уведомлений
+   */
+  async getDirectorsByCity(city: string) {
+    const cityId = Number(city);
+    const directors = await this.prisma.director.findMany({
+      where: {
+        deletedAt: null,
+        cityIds: {
+          has: cityId,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        cityIds: true,
+      },
+>>>>>>> Stashed changes
     });
 
     return { success: true, data: directors };
@@ -77,10 +132,15 @@ export class DirectorsService {
 
     const director = await this.prisma.director.create({
       data: {
+        role: 'director',
         name: dto.name,
         login: dto.login,
         password: hashedPassword,
+<<<<<<< Updated upstream
         role: 'director',
+=======
+        status: 'active',
+>>>>>>> Stashed changes
         cityIds: dto.cityIds || [],
         tgId: dto.tgId,
         passport: dto.passport,
@@ -89,8 +149,19 @@ export class DirectorsService {
         status: 'active',
       },
       select: {
+<<<<<<< Updated upstream
         id: true, name: true, login: true, cityIds: true,
         tgId: true, passport: true, contract: true, createdAt: true,
+=======
+        id: true,
+        name: true,
+        login: true,
+        cityIds: true,
+        tgId: true,
+        passport: true,
+        contract: true,
+        createdAt: true,
+>>>>>>> Stashed changes
       },
     });
 
@@ -114,8 +185,20 @@ export class DirectorsService {
       where: { id },
       data: updateData,
       select: {
+<<<<<<< Updated upstream
         id: true, name: true, login: true, cityIds: true,
         tgId: true, passport: true, contract: true, note: true,
+=======
+        id: true,
+        name: true,
+        login: true,
+        cityIds: true,
+        tgId: true,
+        passport: true,
+        contract: true,
+        note: true,
+        status: true,
+>>>>>>> Stashed changes
       },
     });
 
